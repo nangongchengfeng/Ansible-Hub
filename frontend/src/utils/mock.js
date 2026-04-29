@@ -1055,3 +1055,65 @@ export const mockRedoJob = (id) => {
     }, 500)
   })
 }
+
+export const mockGetDashboardData = (params) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const now = new Date()
+      const days = 7
+
+      // 作业成功率趋势
+      const successRate = []
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(date.getDate() - i)
+        successRate.push({
+          date: date.toISOString().split('T')[0],
+          rate: 85 + Math.random() * 15
+        })
+      }
+
+      // 失败率 Top 10
+      const topFailed = [
+        { name: 'DB Server重启', count: 23, rate: 35 },
+        { name: '应用部署脚本', count: 18, rate: 28 },
+        { name: '数据备份', count: 15, rate: 22 },
+        { name: '系统更新', count: 12, rate: 18 },
+        { name: '配置同步', count: 10, rate: 15 }
+      ]
+
+      // 执行最耗时的作业
+      const longestDuration = [
+        { name: '全量备份作业', duration: 1800 },
+        { name: '数据库迁移', duration: 1200 },
+        { name: '系统升级', duration: 900 },
+        { name: '应用部署', duration: 600 },
+        { name: '环境初始化', duration: 450 }
+      ]
+
+      // 最常被执行的剧本
+      const mostExecuted = [
+        { name: 'web服务器配置', count: 156 },
+        { name: '应用部署', count: 123 },
+        { name: '环境检查', count: 89 },
+        { name: '数据库备份', count: 78 },
+        { name: '系统更新', count: 65 }
+      ]
+
+      const data = {
+        stats: {
+          totalJobs: 1234,
+          successRate: 92.5,
+          avgDuration: 345,
+          automationCoverage: 78
+        },
+        successRate,
+        topFailed,
+        longestDuration,
+        mostExecuted
+      }
+
+      resolve({ data })
+    }, 300)
+  })
+}

@@ -753,3 +753,62 @@ export const mockMoveCommandFilter = (id, direction) => {
     }, 300)
   })
 }
+
+export const mockCheckCommand = (command) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let blocked = false
+      let message = '命令安全，可以执行'
+      let ruleName = ''
+
+      for (const filter of mockCommandFilters) {
+        if (!filter.enabled) continue
+        if (filter.type === 'string') {
+          if (command.includes(filter.pattern)) {
+            blocked = true
+            message = `命令被禁止：${filter.name}`
+            ruleName = filter.name
+            break
+          }
+        } else if (filter.type === 'regex') {
+          try {
+            if (new RegExp(filter.pattern).test(command)) {
+              blocked = true
+              message = `命令被禁止：${filter.name}`
+              ruleName = filter.name
+              break
+            }
+          } catch (e) {}
+        }
+      }
+
+      resolve({ data: { blocked, message, ruleName } })
+    }, 200)
+  })
+}
+
+let jobNextId = 1
+export const mockExecuteJob = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const jobId = `job-${jobNextId++}`
+      resolve({ data: { jobId, status: 'running' } })
+    }, 300)
+  })
+}
+
+export const mockCancelJob = (jobId) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: { success: true, message: '作业已取消' } })
+    }, 200)
+  })
+}
+
+export const mockSaveTemplate = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: { templateId: `template-${Date.now()}`, name: data.name, success: true } })
+    }, 300)
+  })
+}

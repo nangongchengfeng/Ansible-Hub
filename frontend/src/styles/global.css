@@ -1,0 +1,115 @@
+/* 全局样式优化 */
+
+/* 响应式布局适配 */
+@media (max-width: 1200px) {
+  .el-card {
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-aside {
+    position: fixed;
+    z-index: 1000;
+    height: 100vh;
+  }
+
+  .el-form--inline .el-form-item {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .layout-main {
+    padding: 15px !important;
+  }
+
+  .stat-card {
+    margin-bottom: 15px;
+  }
+
+  .el-row [class*="el-col"] {
+    margin-bottom: 15px;
+  }
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 页面滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* 通用卡片优化 */
+.el-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.el-card__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.el-card__body {
+  padding: 20px;
+}
+
+/* 按钮优化 */
+.el-button {
+  border-radius: 4px;
+}
+
+/* 表格优化 */
+.el-table {
+  border-radius: 4px;
+}
+
+/* 输入框优化 */
+.el-input__wrapper {
+  border-radius: 4px;
+}
+
+/* 加载动画 */
+.page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 40px 0;
+}
+
+/* 统一间距 */
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.ml-20 {
+  margin-left: 20px;
+}
+
+.mr-20 {
+  margin-right: 20px;
+}

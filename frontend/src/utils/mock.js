@@ -1069,7 +1069,7 @@ export const mockGetDashboardData = (params) => {
         date.setDate(date.getDate() - i)
         successRate.push({
           date: date.toISOString().split('T')[0],
-          rate: 85 + Math.random() * 15
+          rate: Number((85 + Math.random() * 15).toFixed(1))
         })
       }
 

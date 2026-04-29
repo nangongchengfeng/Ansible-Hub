@@ -1166,3 +1166,88 @@ export const mockGetAuditLogDetail = (id) => {
     }, 300)
   })
 }
+
+// Mock 用户数据
+let mockUsers = [
+  {
+    id: 1,
+    username: 'admin',
+    name: '超级管理员',
+    email: 'admin@example.com',
+    role: 'superadmin',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 2,
+    username: 'auditor',
+    name: '审计员',
+    email: 'auditor@example.com',
+    role: 'auditor',
+    createdAt: '2024-01-05T00:00:00Z',
+    updatedAt: '2024-01-05T00:00:00Z'
+  },
+  {
+    id: 3,
+    username: 'operator',
+    name: '操作员',
+    email: 'operator@example.com',
+    role: 'operator',
+    createdAt: '2024-01-10T00:00:00Z',
+    updatedAt: '2024-01-10T00:00:00Z'
+  }
+]
+
+let userNextId = 4
+
+export const mockGetUsers = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockUsers, total: mockUsers.length })
+    }, 300)
+  })
+}
+
+export const mockCreateUser = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newUser = {
+        id: userNextId++,
+        ...data,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      mockUsers.push(newUser)
+      resolve({ data: newUser })
+    }, 300)
+  })
+}
+
+export const mockUpdateUser = (id, data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const user = mockUsers.find(u => u.id === id)
+      if (user) {
+        Object.assign(user, data, { updatedAt: new Date().toISOString() })
+      }
+      resolve({ data: { id, ...data } })
+    }, 300)
+  })
+}
+
+export const mockDeleteUser = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      mockUsers = mockUsers.filter(u => u.id !== id)
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}
+
+export const mockResetUserPassword = (id, newPassword) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: { success: true, message: '密码已重置' } })
+    }, 300)
+  })
+}

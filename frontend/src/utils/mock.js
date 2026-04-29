@@ -517,3 +517,147 @@ export const mockRollbackScript = (scriptId, versionId) => {
     }, 300)
   })
 }
+
+// Mock 剧本数据
+let mockPlaybooks = [
+  { id: 1, name: 'setup-webserver.yml', description: '部署 Web 服务器', content: '---\n- hosts: web_servers\n  roles:\n    - nginx', currentVersion: 2, createdBy: 'admin', createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-05T00:00:00Z' },
+  { id: 2, name: 'deploy-app.yml', description: '部署应用程序', content: '---\n- hosts: app_servers\n  tasks:\n    - name: Deploy app\n      git: repo=https://github.com/app.git dest=/app', currentVersion: 1, createdBy: 'admin', createdAt: '2024-01-02T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' }
+]
+
+let mockPlaybookVersions = {
+  1: [
+    { id: 'v1', playbookId: 1, version: 1, content: '---\n- hosts: web_servers\n  roles:\n    - nginx', changeNote: '初始版本', createdBy: 'admin', createdAt: '2024-01-01T00:00:00Z' },
+    { id: 'v2', playbookId: 1, version: 2, content: '---\n- hosts: web_servers\n  roles:\n    - nginx\n    - ssl', changeNote: '添加 SSL 配置', createdBy: 'admin', createdAt: '2024-01-05T00:00:00Z' }
+  ],
+  2: [
+    { id: 'v1', playbookId: 2, version: 1, content: '---\n- hosts: app_servers\n  tasks:\n    - name: Deploy app\n      git: repo=https://github.com/app.git dest=/app', changeNote: '初始版本', createdBy: 'admin', createdAt: '2024-01-02T00:00:00Z' }
+  ]
+}
+
+let playbookNextId = 3
+let playbookVersionNextId = 3
+
+export const mockGetPlaybooks = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockPlaybooks })
+    }, 300)
+  })
+}
+
+export const mockCreatePlaybook = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newPlaybook = {
+        id: playbookNextId++,
+        ...data,
+        currentVersion: 1,
+        createdBy: 'admin',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      mockPlaybooks.push(newPlaybook)
+
+      mockPlaybookVersions[newPlaybook.id] = [
+        {
+          id: `v${playbookVersionNextId++}`,
+          playbookId: newPlaybook.id,
+          version: 1,
+          content: data.content,
+          changeNote: data.changeNote || '初始版本',
+          createdBy: 'admin',
+          createdAt: new Date().toISOString()
+        }
+      ]
+
+      resolve({ data: newPlaybook })
+    }, 300)
+  })
+}
+
+export const mockUpdatePlaybook = (id, data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const playbook = mockPlaybooks.find(p => p.id === id)
+      if (playbook) {
+        playbook.name = data.name
+        playbook.description = data.description
+        playbook.content = data.content
+        playbook.updatedAt = new Date().toISOString()
+        playbook.currentVersion++
+
+        const newVersion = {
+          id: `v${playbookVersionNextId++}`,
+          playbookId: id,
+          version: playbook.currentVersion,
+          content: data.content,
+          changeNote: data.changeNote || '更新版本',
+          createdBy: 'admin',
+          createdAt: new Date().toISOString()
+        }
+        if (!mockPlaybookVersions[id]) {
+          mockPlaybookVersions[id] = []
+        }
+        mockPlaybookVersions[id].push(newVersion)
+      }
+      resolve({ data: { id, ...data } })
+    }, 300)
+  })
+}
+
+export const mockDeletePlaybook = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      mockPlaybooks = mockPlaybooks.filter(p => p.id !== id)
+      delete mockPlaybookVersions[id]
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}
+
+export const mockGetPlaybookVersions = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockPlaybookVersions[id] || [] })
+    }, 300)
+  })
+}
+
+export const mockGetPlaybookVersion = (playbookId, versionId) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const versions = mockPlaybookVersions[playbookId] || []
+      const version = versions.find(v => v.id === versionId)
+      resolve({ data: version })
+    }, 300)
+  })
+}
+
+export const mockRollbackPlaybook = (playbookId, versionId) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const playbook = mockPlaybooks.find(p => p.id === playbookId)
+      const versions = mockPlaybookVersions[playbookId] || []
+      const targetVersion = versions.find(v => v.id === versionId)
+
+      if (playbook && targetVersion) {
+        playbook.content = targetVersion.content
+        playbook.updatedAt = new Date().toISOString()
+        playbook.currentVersion++
+
+        const newVersion = {
+          id: `v${playbookVersionNextId++}`,
+          playbookId: playbookId,
+          version: playbook.currentVersion,
+          content: targetVersion.content,
+          changeNote: `回滚到版本 ${targetVersion.version}`,
+          createdBy: 'admin',
+          createdAt: new Date().toISOString()
+        }
+        versions.push(newVersion)
+      }
+
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}

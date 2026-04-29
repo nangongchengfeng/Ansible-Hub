@@ -13,7 +13,7 @@
 
       <el-tree
         v-loading="loading"
-        :data="treeData"
+        :data="filteredTreeData"
         :props="treeProps"
         node-key="id"
         default-expand-all
@@ -31,6 +31,10 @@
               <el-button link type="primary" size="small" @click="handleCreate(data)">
                 <el-icon><Plus /></el-icon>
                 添加子节点
+              </el-button>
+              <el-button link type="primary" size="small" @click="handlePermission(data)">
+                <el-icon><Key /></el-icon>
+                权限
               </el-button>
               <el-button link type="danger" size="small" @click="handleDelete(data)">
                 <el-icon><Delete /></el-icon>
@@ -58,11 +62,12 @@
         <el-form-item label="父节点" prop="parentId">
           <el-tree-select
             v-model="formData.parentId"
-            :data="treeData"
+            :data="filteredTreeData"
             :props="treeProps"
             placeholder="选择父节点（不选则为根节点）"
             clearable
             check-strictly
+            :disabled="isEdit"
           />
         </el-form-item>
         <el-form-item label="绑定网关" prop="gatewayId">
@@ -78,14 +83,43 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 权限配置对话框 -->
+    <el-dialog
+      v-model="permissionDialogVisible"
+      title="配置节点权限"
+      width="500px"
+    >
+      <el-form label-width="100px">
+        <el-form-item label="节点名称">
+          <span>{{ permissionNode?.name }}</span>
+        </el-form-item>
+        <el-form-item label="查看权限">
+          <el-switch v-model="permissionData.view" />
+        </el-form-item>
+        <el-form-item label="执行权限">
+          <el-switch v-model="permissionData.execute" />
+        </el-form-item>
+        <el-form-item label="管理权限">
+          <el-switch v-model="permissionData.manage" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="permissionDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handlePermissionSubmit">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { getBusinessNodes, getGateways, createBusinessNode } from '@/api/business-nodes'
+import { Plus, Edit, Delete, Key } from '@element-plus/icons-vue'
+import { getBusinessNodes, getGateways, createBusinessNode, updateBusinessNode, deleteBusinessNode, updateNodePermissions } from '@/api/business-nodes'
+import { useAuthStore } from '@/stores/auth'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -96,6 +130,14 @@ const dialogTitle = ref('创建业务节点')
 const formRef = ref(null)
 const isEdit = ref(false)
 const editingId = ref(null)
+
+const permissionDialogVisible = ref(false)
+const permissionNode = ref(null)
+const permissionData = reactive({
+  view: true,
+  execute: false,
+  manage: false
+})
 
 const formData = reactive({
   name: '',
@@ -112,6 +154,39 @@ const treeProps = {
   children: 'children',
   label: 'name'
 }
+
+const authStore = useAuthStore()
+
+const filterTreeByPermission = (nodes, permission = 'view') => {
+  // 超级管理员可以看到所有节点
+  if (authStore.user?.role === 'superadmin') {
+    return nodes
+  }
+
+  return nodes.filter(node => {
+    // 检查当前节点权限
+    const hasPermission = node.permissions?.[permission] ?? true
+
+    // 递归过滤子节点
+    let filteredChildren = []
+    if (node.children && node.children.length > 0) {
+      filteredChildren = filterTreeByPermission(node.children, permission)
+    }
+
+    // 如果当前节点有权限，或者有子节点有权限，则保留
+    if (hasPermission || filteredChildren.length > 0) {
+      return {
+        ...node,
+        children: filteredChildren.length > 0 ? filteredChildren : undefined
+      }
+    }
+    return false
+  }).filter(Boolean)
+}
+
+const filteredTreeData = computed(() => {
+  return filterTreeByPermission(treeData.value)
+})
 
 const fetchData = async () => {
   loading.value = true
@@ -155,7 +230,14 @@ const handleCreate = (parentNode) => {
 }
 
 const handleEdit = (node) => {
-  ElMessage.info('编辑节点功能开发中')
+  isEdit.value = true
+  editingId.value = node.id
+  dialogTitle.value = '编辑业务节点'
+  formData.name = node.name
+  formData.description = node.description || ''
+  formData.parentId = node.parentId
+  formData.gatewayId = node.gatewayId || null
+  dialogVisible.value = true
 }
 
 const handleDelete = async (node) => {
@@ -165,6 +247,7 @@ const handleDelete = async (node) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
+    await deleteBusinessNode(node.id)
     ElMessage.success('删除成功')
     await fetchData()
   } catch (error) {
@@ -182,16 +265,43 @@ const handleSubmit = async () => {
 
     submitLoading.value = true
     try {
-      await createBusinessNode(formData)
-      ElMessage.success('创建成功')
+      if (isEdit.value) {
+        await updateBusinessNode(editingId.value, formData)
+        ElMessage.success('更新成功')
+      } else {
+        await createBusinessNode(formData)
+        ElMessage.success('创建成功')
+      }
       dialogVisible.value = false
       await fetchData()
     } catch (error) {
-      ElMessage.error('创建失败')
+      ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
     } finally {
       submitLoading.value = false
     }
   })
+}
+
+const handlePermission = (node) => {
+  permissionNode.value = node
+  permissionData.view = node.permissions?.view ?? true
+  permissionData.execute = node.permissions?.execute ?? false
+  permissionData.manage = node.permissions?.manage ?? false
+  permissionDialogVisible.value = true
+}
+
+const handlePermissionSubmit = async () => {
+  submitLoading.value = true
+  try {
+    await updateNodePermissions(permissionNode.value.id, { ...permissionData })
+    ElMessage.success('权限配置成功')
+    permissionDialogVisible.value = false
+    await fetchData()
+  } catch (error) {
+    ElMessage.error('权限配置失败')
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 onMounted(() => {

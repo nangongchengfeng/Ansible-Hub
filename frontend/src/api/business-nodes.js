@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { mockGetBusinessNodes, mockGetGateways, mockCreateBusinessNode } from '@/utils/mock'
+import { mockGetBusinessNodes, mockGetGateways, mockCreateBusinessNode, mockUpdateBusinessNode, mockDeleteBusinessNode, mockUpdateNodePermissions, mockCreateGateway, mockUpdateGateway, mockDeleteGateway } from '@/utils/mock'
 
 const useMock = true
 
@@ -19,13 +19,16 @@ export const createBusinessNode = (data) => {
 }
 
 export const updateBusinessNode = (id, data) => {
+  if (useMock) return mockUpdateBusinessNode(id, data)
   return request.put(`/business-nodes/${id}`, data)
 }
 
 export const deleteBusinessNode = (id) => {
+  if (useMock) return mockDeleteBusinessNode(id)
   return request.delete(`/business-nodes/${id}`)
 }
 
 export const updateNodePermissions = (id, permissions) => {
+  if (useMock) return mockUpdateNodePermissions(id, permissions)
   return request.put(`/business-nodes/${id}/permissions`, { permissions })
 }

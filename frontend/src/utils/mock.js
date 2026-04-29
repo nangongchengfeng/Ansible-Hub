@@ -1117,3 +1117,52 @@ export const mockGetDashboardData = (params) => {
     }, 300)
   })
 }
+
+// Mock 审计日志数据
+let mockAuditLogs = [
+  { id: 1, action: 'LOGIN', user: 'admin', detail: '用户登录系统', ip: '192.168.1.1', createdAt: '2024-01-15T10:30:00Z' },
+  { id: 2, action: 'CREATE', user: 'admin', detail: '创建业务节点「测试环境」', ip: '192.168.1.1', createdAt: '2024-01-15T10:35:00Z' },
+  { id: 3, action: 'UPDATE', user: 'admin', detail: '更新主机「Web Server 01」配置', ip: '192.168.1.1', createdAt: '2024-01-15T10:40:00Z' },
+  { id: 4, action: 'DELETE', user: 'admin', detail: '删除旧脚本「test.sh」', ip: '192.168.1.1', createdAt: '2024-01-15T10:45:00Z' },
+  { id: 5, action: 'EXECUTE', user: 'admin', detail: '执行作业「日常备份」', ip: '192.168.1.1', createdAt: '2024-01-15T11:00:00Z' },
+  { id: 6, action: 'LOGIN', user: 'auditor', detail: '用户登录系统', ip: '192.168.1.2', createdAt: '2024-01-15T11:30:00Z' },
+  { id: 7, action: 'PERMISSION', user: 'admin', detail: '修改用户「operator」权限', ip: '192.168.1.1', createdAt: '2024-01-15T12:00:00Z' },
+  { id: 8, action: 'LOGOUT', user: 'auditor', detail: '用户退出系统', ip: '192.168.1.2', createdAt: '2024-01-15T12:30:00Z' }
+]
+
+export const mockGetAuditLogs = (params) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let filtered = [...mockAuditLogs]
+
+      if (params?.action && params?.action !== 'all') {
+        filtered = filtered.filter(log => log.action === params.action)
+      }
+
+      if (params?.user && params?.user !== 'all') {
+        filtered = filtered.filter(log => log.user === params.user)
+      }
+
+      if (params?.startTime) {
+        filtered = filtered.filter(log => new Date(log.createdAt) >= new Date(params.startTime))
+      }
+
+      if (params?.endTime) {
+        filtered = filtered.filter(log => new Date(log.createdAt) <= new Date(params.endTime))
+      }
+
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+      resolve({ data: filtered, total: filtered.length })
+    }, 300)
+  })
+}
+
+export const mockGetAuditLogDetail = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const log = mockAuditLogs.find(l => l.id === id)
+      resolve({ data: log })
+    }, 300)
+  })
+}

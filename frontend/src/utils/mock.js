@@ -925,3 +925,133 @@ export const mockUpdateTemplatePermissions = (id, permissions) => {
     }, 300)
   })
 }
+
+// Mock 作业历史数据
+let mockJobHistory = [
+  {
+    id: 1,
+    name: '日常备份作业',
+    executeType: 'script',
+    status: 'success',
+    hostNames: ['Web Server 01', 'Web Server 02'],
+    startedAt: '2024-01-15T02:00:00Z',
+    completedAt: '2024-01-15T02:15:30Z',
+    duration: 930,
+    createdBy: 'system'
+  },
+  {
+    id: 2,
+    name: '手动执行 - Shell命令',
+    executeType: 'shell',
+    status: 'success',
+    hostNames: ['Web Server 01'],
+    startedAt: '2024-01-14T10:30:00Z',
+    completedAt: '2024-01-14T10:32:15Z',
+    duration: 135,
+    createdBy: 'admin'
+  },
+  {
+    id: 3,
+    name: '服务重启作业',
+    executeType: 'shell',
+    status: 'failed',
+    hostNames: ['DB Server 01'],
+    startedAt: '2024-01-13T03:00:00Z',
+    completedAt: '2024-01-13T03:05:20Z',
+    duration: 320,
+    createdBy: 'system'
+  },
+  {
+    id: 4,
+    name: '部署应用',
+    executeType: 'playbook',
+    status: 'cancelled',
+    hostNames: ['Web Server 01', 'Web Server 02'],
+    startedAt: '2024-01-12T14:00:00Z',
+    completedAt: '2024-01-12T14:10:00Z',
+    duration: 600,
+    createdBy: 'admin'
+  },
+  {
+    id: 5,
+    name: '正在运行的作业',
+    executeType: 'shell',
+    status: 'running',
+    hostNames: ['Test Server'],
+    startedAt: '2024-01-15T08:00:00Z',
+    completedAt: null,
+    duration: null,
+    createdBy: 'admin'
+  }
+]
+
+let jobHistoryNextId = 6
+
+export const mockGetJobHistory = (params) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let filtered = [...mockJobHistory]
+
+      if (params?.status && params.status !== 'all') {
+        filtered = filtered.filter(j => j.status === params.status)
+      }
+
+      if (params?.startTime) {
+        filtered = filtered.filter(j => new Date(j.startedAt) >= new Date(params.startTime))
+      }
+
+      if (params?.endTime) {
+        filtered = filtered.filter(j => new Date(j.startedAt) <= new Date(params.endTime))
+      }
+
+      resolve({ data: filtered, total: filtered.length })
+    }, 300)
+  })
+}
+
+export const mockGetJobDetail = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const job = mockJobHistory.find(j => j.id === id)
+      resolve({ data: job })
+    }, 300)
+  })
+}
+
+export const mockGetJobLogs = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const logs = [
+        { time: '2024-01-15T02:00:00Z', level: 'info', message: '开始执行作业' },
+        { time: '2024-01-15T02:00:05Z', level: 'info', message: '连接主机 Web Server 01' },
+        { time: '2024-01-15T02:00:10Z', level: 'info', message: '上传执行文件' },
+        { time: '2024-01-15T02:00:30Z', level: 'info', message: '开始执行脚本' },
+        { time: '2024-01-15T02:10:00Z', level: 'info', message: '执行进度: 50%' },
+        { time: '2024-01-15T02:15:00Z', level: 'info', message: '执行进度: 100%' },
+        { time: '2024-01-15T02:15:30Z', level: 'success', message: '作业执行完成' }
+      ]
+      resolve({ data: logs })
+    }, 300)
+  })
+}
+
+export const mockRedoJob = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const originalJob = mockJobHistory.find(j => j.id === id)
+      const newJob = {
+        id: jobHistoryNextId++,
+        name: `重做 - ${originalJob?.name}`,
+        executeType: originalJob?.executeType || 'shell',
+        status: 'running',
+        hostNames: originalJob?.hostNames || [],
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        duration: null,
+        createdBy: 'admin'
+      }
+      mockJobHistory.unshift(newJob)
+      resolve({ data: { jobId: newJob.id, success: true, message: '作业已重新执行' } })
+    }, 500)
+  })
+}

@@ -812,3 +812,116 @@ export const mockSaveTemplate = (data) => {
     }, 300)
   })
 }
+
+// Mock 作业模板数据
+let mockJobTemplates = [
+  {
+    id: 1,
+    name: '日常备份作业',
+    description: '每日自动备份数据',
+    executeType: 'script',
+    scriptId: 1,
+    hostIds: [1, 2],
+    cronExpression: '0 2 * * *',
+    enabled: true,
+    permissions: { view: true, execute: true, manage: true },
+    createdBy: 'admin',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-05T00:00:00Z'
+  },
+  {
+    id: 2,
+    name: '服务重启作业',
+    description: '每周重启服务',
+    executeType: 'shell',
+    command: 'systemctl restart myapp',
+    hostIds: [1],
+    cronExpression: '0 3 * * 0',
+    enabled: false,
+    permissions: { view: true, execute: false, manage: true },
+    createdBy: 'admin',
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z'
+  }
+]
+
+let jobTemplateNextId = 3
+
+export const mockGetJobTemplates = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockJobTemplates })
+    }, 300)
+  })
+}
+
+export const mockCreateJobTemplate = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newTemplate = {
+        id: jobTemplateNextId++,
+        ...data,
+        enabled: true,
+        permissions: { view: true, execute: true, manage: true },
+        createdBy: 'admin',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      mockJobTemplates.push(newTemplate)
+      resolve({ data: newTemplate })
+    }, 300)
+  })
+}
+
+export const mockUpdateJobTemplate = (id, data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const template = mockJobTemplates.find(t => t.id === id)
+      if (template) {
+        Object.assign(template, data, { updatedAt: new Date().toISOString() })
+      }
+      resolve({ data: { id, ...data } })
+    }, 300)
+  })
+}
+
+export const mockDeleteJobTemplate = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      mockJobTemplates = mockJobTemplates.filter(t => t.id !== id)
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}
+
+export const mockToggleJobTemplate = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const template = mockJobTemplates.find(t => t.id === id)
+      if (template) {
+        template.enabled = !template.enabled
+      }
+      resolve({ data: { id, enabled: template?.enabled } })
+    }, 200)
+  })
+}
+
+export const mockTriggerJobTemplate = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: { jobId: `job-${Date.now()}`, success: true, message: '作业已触发' } })
+    }, 500)
+  })
+}
+
+export const mockUpdateTemplatePermissions = (id, permissions) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const template = mockJobTemplates.find(t => t.id === id)
+      if (template) {
+        template.permissions = permissions
+      }
+      resolve({ data: { id, permissions } })
+    }, 300)
+  })
+}

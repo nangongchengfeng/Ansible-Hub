@@ -661,3 +661,95 @@ export const mockRollbackPlaybook = (playbookId, versionId) => {
     }, 300)
   })
 }
+
+// Mock 命令过滤规则数据
+let mockCommandFilters = [
+  { id: 1, name: '禁止 rm -rf', pattern: 'rm -rf', type: 'string', enabled: true, priority: 1, createdBy: 'admin', createdAt: '2024-01-01T00:00:00Z' },
+  { id: 2, name: '禁止 dd 命令', pattern: 'dd\\s+if=', type: 'regex', enabled: true, priority: 2, createdBy: 'admin', createdAt: '2024-01-02T00:00:00Z' },
+  { id: 3, name: '禁止格式化磁盘', pattern: 'mkfs\\.', type: 'regex', enabled: false, priority: 3, createdBy: 'admin', createdAt: '2024-01-03T00:00:00Z' }
+]
+
+let commandFilterNextId = 4
+
+export const mockGetCommandFilters = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ data: mockCommandFilters })
+    }, 300)
+  })
+}
+
+export const mockCreateCommandFilter = (data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newFilter = {
+        id: commandFilterNextId++,
+        ...data,
+        enabled: true,
+        priority: mockCommandFilters.length + 1,
+        createdBy: 'admin',
+        createdAt: new Date().toISOString()
+      }
+      mockCommandFilters.push(newFilter)
+      resolve({ data: newFilter })
+    }, 300)
+  })
+}
+
+export const mockUpdateCommandFilter = (id, data) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const filter = mockCommandFilters.find(f => f.id === id)
+      if (filter) {
+        Object.assign(filter, data)
+      }
+      resolve({ data: { id, ...data } })
+    }, 300)
+  })
+}
+
+export const mockDeleteCommandFilter = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      mockCommandFilters = mockCommandFilters.filter(f => f.id !== id)
+      mockCommandFilters.forEach((f, index) => {
+        f.priority = index + 1
+      })
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}
+
+export const mockToggleCommandFilter = (id) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const filter = mockCommandFilters.find(f => f.id === id)
+      if (filter) {
+        filter.enabled = !filter.enabled
+      }
+      resolve({ data: { id, enabled: filter?.enabled } })
+    }, 200)
+  })
+}
+
+export const mockMoveCommandFilter = (id, direction) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const index = mockCommandFilters.findIndex(f => f.id === id)
+      if (index !== -1) {
+        const filter = mockCommandFilters[index]
+        if (direction === 'up' && index > 0) {
+          mockCommandFilters.splice(index, 1)
+          mockCommandFilters.splice(index - 1, 0, filter)
+        } else if (direction === 'down' && index < mockCommandFilters.length - 1) {
+          mockCommandFilters.splice(index, 1)
+          mockCommandFilters.splice(index + 1, 0, filter)
+        }
+        mockCommandFilters.forEach((f, i) => {
+          f.priority = i + 1
+        })
+      }
+      resolve({ data: { success: true } })
+    }, 300)
+  })
+}

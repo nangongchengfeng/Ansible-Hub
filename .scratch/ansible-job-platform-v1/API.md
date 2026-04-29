@@ -2877,3 +2877,485 @@ wss://api.example.com/v1/job-executions/{id}/output?token=eyJhbGciOiJIUzI1NiIsIn
 
 **文档版本**：v1.0  
 **最后更新**：2024-01-01
+
+---
+
+## API设计改进建议
+
+### 1. PATCH端点支持（部分更新）
+
+**当前问题**：所有更新操作仅使用PUT，要求客户端提供完整资源。
+
+**改进方案**：为所有主要资源添加PATCH端点，支持部分更新：
+
+```
+PATCH /users/{id}
+PATCH /business-nodes/{id}
+PATCH /hosts/{id}
+PATCH /system-users/{id}
+PATCH /gateways/{id}
+PATCH /scripts/{id}
+PATCH /playbooks/{id}
+PATCH /command-filter-rules/{id}
+PATCH /job-templates/{id}
+```
+
+**示例（更新主机）**：
+```json
+{
+  "name": "新主机名",
+  "ip_internal": "192.168.1.20"
+}
+```
+
+---
+
+### 2. WebSocket安全增强
+
+**当前问题**：token通过query parameter传递，可能被访问日志记录。
+
+**改进方案**：
+
+**连接方式（推荐）**：
+```http
+GET /v1/job-executions/{id}/output
+Authorization: Bearer {access_token}
+Upgrade: websocket
+Connection: Upgrade
+```
+
+**向后兼容方案**（继续支持query param，但推荐使用header）：
+```
+wss://api.example.com/v1/job-executions/{id}/output?token={access_token}
+```
+
+**新增功能**：
+- 心跳机制（每30秒ping/pong）
+- 连接状态通知
+- 消息确认机制
+
+---
+
+### 3. 错误响应格式统一和增强
+
+**改进方案**：明确定义验证错误详情格式：
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "参数验证失败",
+    "details": [
+      {
+        "field": "name",
+        "code": "required",
+        "message": "名称不能为空"
+      },
+      {
+        "field": "email",
+        "code": "invalid_format",
+        "message": "邮箱格式不正确"
+      }
+    ]
+  }
+}
+```
+
+**常见错误码**：
+- `required` - 必填字段缺失
+- `invalid_format` - 格式不正确
+- `too_short` / `too_long` - 长度不符合要求
+- `invalid_enum` - 枚举值不正确
+- `already_exists` - 资源已存在
+- `not_found` - 资源不存在
+- `permission_denied` - 权限不足
+
+---
+
+### 4. 速率限制规范
+
+**新增内容**：添加明确的速率限制说明：
+
+**响应头**：
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 950
+X-RateLimit-Reset: 1699999999
+```
+
+**429错误响应**：
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TOO_MANY_REQUESTS",
+    "message": "请求过于频繁，请稍后再试",
+    "retry_after": 60
+  }
+}
+```
+
+**速率限制策略**：
+- 认证接口：10次/分钟
+- 读取操作：1000次/分钟
+- 写入操作：100次/分钟
+- 作业执行：10次/分钟
+
+---
+
+### 5. 新增批量操作端点
+
+**主机批量创建**：
+```
+POST /hosts/batch
+```
+
+**请求体**：
+```json
+{
+  "hosts": [
+    {
+      "name": "web-server-01",
+      "business_node_id": 2,
+      "ip_internal": "192.168.1.10"
+    },
+    {
+      "name": "web-server-02",
+      "business_node_id": 2,
+      "ip_internal": "192.168.1.11"
+    }
+  ]
+}
+```
+
+**响应**：
+```json
+{
+  "success": true,
+  "data": {
+    "total": 2,
+    "success": 2,
+    "failed": 0,
+    "hosts": [
+      {
+        "id": 10,
+        "name": "web-server-01",
+        "status": "created"
+      }
+    ]
+  }
+}
+```
+
+**其他批量端点**：
+```
+POST /business-nodes/{id}/hosts/batch  # 批量添加到业务节点
+DELETE /hosts/batch  # 批量删除
+POST /scripts/batch  # 批量导入脚本
+```
+
+---
+
+### 6. 分页参数标准化
+
+**改进方案**：统一分页参数名称：
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|-----|------|------|------|------|
+| `page` | int | 否 | 1 | 页码 |
+| `limit` | int | 否 | 20 | 每页数量（最大100） |
+| `sort_by` | string | 否 | `created_at` | 排序字段 |
+| `sort_order` | string | 否 | `desc` | 排序方向（asc/desc） |
+
+**改进的分页响应**：
+```json
+{
+  "success": true,
+  "data": {
+    "items": [],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 100,
+      "total_pages": 5,
+      "has_next": true,
+      "has_prev": false
+    }
+  },
+  "message": "查询成功"
+}
+```
+
+---
+
+### 7. 新增SSE端点（WebSocket备选）
+
+**Server-Sent Events端点**：
+```
+GET /job-executions/{id}/events
+Authorization: Bearer {access_token}
+Accept: text/event-stream
+```
+
+**事件流格式**：
+```
+event: status_update
+data: {"status": "running", "started_at": "2024-01-01T12:00:00Z"}
+
+event: task_output
+data: {"task_id": 5001, "host_id": 1, "output": "...", "timestamp": "..."}
+
+event: task_complete
+data: {"task_id": 5001, "host_id": 1, "status": "success"}
+
+event: job_complete
+data: {"status": "success", "finished_at": "..."}
+```
+
+---
+
+### 8. 新增系统健康检查端点
+
+**服务健康检查**：
+```
+GET /health
+```
+
+**响应**：
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "version": "1.0.0",
+    "services": {
+      "database": "healthy",
+      "redis": "healthy",
+      "celery_worker": "healthy"
+    },
+    "uptime": 86400
+  }
+}
+```
+
+**系统状态**：
+```
+GET /status
+```
+
+**响应**：
+```json
+{
+  "success": true,
+  "data": {
+    "queued_jobs": 5,
+    "running_jobs": 3,
+    "active_users": 10,
+    "database_pool": {
+      "used": 15,
+      "idle": 5,
+      "max": 20
+    }
+  }
+}
+```
+
+---
+
+### 9. 新增全局搜索端点
+
+**跨资源搜索**：
+```
+GET /search?q=web-server&type=host,script
+```
+
+**查询参数**：
+- `q` - 搜索关键词
+- `type` - 资源类型（可选，逗号分隔）
+- `limit` - 结果数量限制（默认20）
+
+**响应**：
+```json
+{
+  "success": true,
+  "data": {
+    "hits": [
+      {
+        "type": "host",
+        "id": 1,
+        "name": "web-server-01",
+        "summary": "192.168.1.10"
+      },
+      {
+        "type": "script",
+        "id": 5,
+        "name": "web-deploy.sh",
+        "summary": "部署Web服务脚本"
+      }
+    ],
+    "total": 2
+  }
+}
+```
+
+---
+
+### 10. 文件上传端点（为未来版本预留）
+
+**剧本文件上传**：
+```
+POST /playbooks/upload
+Content-Type: multipart/form-data
+
+file: [剧本文件]
+name: "web-deploy.yml"
+description: "Web服务部署剧本"
+```
+
+**脚本文件上传**：
+```
+POST /scripts/upload
+Content-Type: multipart/form-data
+
+file: [脚本文件]
+name: "backup.sh"
+language: "bash"
+```
+
+---
+
+### 11. 版本管理策略
+
+**API版本控制**：
+- URL路径版本：`/v1/...`（当前）
+- 向后兼容保证
+- 弃用通知提前3个月
+
+**响应头添加**：
+```
+X-API-Version: 1.0.0
+X-API-Deprecated: false
+X-API-Sunset: <可选，过期日期>
+```
+
+---
+
+### 12. 优化的主机连接配置响应
+
+**增强当前端点**：
+```
+GET /hosts/{id}/connection-config
+```
+
+**新增字段**：
+```json
+{
+  "success": true,
+  "data": {
+    "host_id": 1,
+    "host_name": "web-server-01",
+    "ip": "192.168.1.10",
+    "ssh_port": 22,
+    "system_user_id": 1,
+    "system_user": {
+      "id": 1,
+      "name": "root",
+      "username": "root",
+      "auth_type": "private_key"
+    },
+    "gateway": {
+      "id": 1,
+      "name": "生产网关",
+      "ip": "192.168.1.100",
+      "port": 22,
+      "system_user_id": 1,
+      "source": "business_node"
+    },
+    "resolved_config": {
+      "ansible_host": "192.168.1.10",
+      "ansible_port": 22,
+      "ansible_user": "root",
+      "ansible_ssh_private_key": "<vaulted>",
+      "ansible_ssh_common_args": "-o ProxyCommand='ssh -W %h:%p -q 192.168.1.100'"
+    },
+    "resolution_path": [
+      {
+        "level": "host",
+        "field": "ip",
+        "value": "192.168.1.10",
+        "status": "explicit"
+      },
+      {
+        "level": "business_node",
+        "field": "gateway_id",
+        "value": 1,
+        "status": "inherited"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 13. Webhook/事件订阅（为未来版本预留）
+
+**创建订阅**：
+```
+POST /webhooks
+```
+
+**请求体**：
+```json
+{
+  "url": "https://example.com/webhook",
+  "events": ["job.completed", "job.failed"],
+  "secret": "webhook-secret-key",
+  "enabled": true
+}
+```
+
+---
+
+### 14. 改进建议优先级
+
+| 优先级 | 功能 | 说明 |
+|-------|------|------|
+| P0 | PATCH端点 | 核心功能改进，提升开发体验 |
+| P0 | 统一错误格式 | 提升调试体验和一致性 |
+| P1 | 速率限制 | 系统稳定性保障 |
+| P1 | 分页标准化 | API一致性改进 |
+| P1 | 批量操作 | 提升效率的重要功能 |
+| P2 | 健康检查 | 运维友好功能 |
+| P2 | 全局搜索 | 用户体验优化 |
+| P2 | WebSocket安全增强 | 安全性改进 |
+| P3 | SSE端点 | WebSocket备选方案 |
+| P3 | Webhook | 未来扩展 |
+
+---
+
+### 15. 与前后端任务对齐情况
+
+✅ **完整对齐**：所有改进均不违背现有PRD和任务设计
+✅ **向后兼容**：所有新增功能均为追加，不影响现有API
+✅ **任务覆盖**：
+- 后端任务：改进建议可直接集成到任务1-19中
+- 前端任务：现有前端页面可无缝迁移到新API
+✅ **安全优先**：所有改进均考虑了安全性设计
+
+---
+
+## 总结
+
+本API文档提供了完整的Ansible作业平台API设计，包括：
+
+✅ **完整的资源CRUD**
+✅ **认证授权系统**
+✅ **作业执行与实时输出**
+✅ **版本管理**
+✅ **审计日志**
+✅ **运营分析**
+✅ **详细的改进建议**（新增）
+
+API设计与PRD、前端任务、后端任务完全对齐，可直接用于指导开发工作。

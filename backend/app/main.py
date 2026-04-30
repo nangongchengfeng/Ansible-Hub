@@ -15,9 +15,9 @@ app.add_middleware(
 )
 
 # 注册路由
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(business_nodes_router)
+app.include_router(auth_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
+app.include_router(business_nodes_router, prefix="/api")
 
 
 @app.get("/health")

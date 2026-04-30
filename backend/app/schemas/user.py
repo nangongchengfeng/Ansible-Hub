@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -6,7 +6,7 @@ from enum import Enum
 
 class UserRole(str, Enum):
     """用户角色枚举"""
-    SUPER_ADMIN = "super_admin"
+    SUPER_ADMIN = "superadmin"
     OPERATOR = "operator"
     DEVELOPER = "developer"
     AUDITOR = "auditor"
@@ -48,6 +48,13 @@ class UserResponse(UserBase):
     last_login_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def validate_role(cls, v):
+        if isinstance(v, str):
+            return UserRole(v)
+        return v
 
     class Config:
         from_attributes = True

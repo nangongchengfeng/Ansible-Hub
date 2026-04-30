@@ -39,6 +39,16 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
+class UserSimple(BaseModel):
+    """Simple user info"""
+    id: int
+    username: str
+    real_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserListResponse(BaseModel):
     """用户列表响应"""
     total: int

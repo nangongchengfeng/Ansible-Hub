@@ -10,6 +10,9 @@ from app.schemas.business_node import (
     BusinessNodeUpdate,
     BusinessNodeResponse,
     BusinessNodeTreeItem,
+    BusinessNodePermissionWithUser,
+    BusinessNodePermissionsUpdate,
+    BusinessNodeGatewayUpdate,
 )
 from app.services.business_node import BusinessNodeService
 
@@ -40,9 +43,9 @@ async def get_business_nodes_tree(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取业务节点树状结构"""
-    # TODO: 添加权限过滤，根据用户权限返回可见节点
-    nodes = await BusinessNodeService.get_tree(db)
+    """获取业务节点树状结构（含权限过滤）"""
+    accessible_ids = await BusinessNodeService.get_accessible_node_ids(db, current_user, "view")
+    nodes = await BusinessNodeService.get_filtered_tree(db, accessible_ids)
     return [_build_tree_item(node) for node in nodes]
 
 
@@ -142,3 +145,84 @@ async def delete_business_node(
         )
     await BusinessNodeService.delete(db, node)
     return None
+
+
+# Permission endpoints
+
+@router.get("/{node_id}/permissions", response_model=List[BusinessNodePermissionWithUser])
+async def get_business_node_permissions(
+    node_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取业务节点权限列表"""
+    # Check if node exists
+    node = await BusinessNodeService.get_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Business node not found",
+        )
+    # TODO: Add permission check
+    permissions = await BusinessNodeService.get_permissions(db, node_id)
+    return permissions
+
+
+@router.put("/{node_id}/permissions", response_model=List[BusinessNodePermissionWithUser])
+async def set_business_node_permissions(
+    node_id: int,
+    permissions_in: BusinessNodePermissionsUpdate,
+    current_user: User = Depends(get_current_superuser),
+    db: AsyncSession = Depends(get_db),
+):
+    """设置业务节点权限（覆盖）"""
+    # Check if node exists
+    node = await BusinessNodeService.get_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Business node not found",
+        )
+    permissions = await BusinessNodeService.set_permissions(
+        db, node_id, permissions_in.permissions, current_user.id
+    )
+    return permissions
+
+
+@router.put("/{node_id}/gateway", response_model=BusinessNodeResponse)
+async def update_business_node_gateway(
+    node_id: int,
+    gateway_in: BusinessNodeGatewayUpdate,
+    current_user: User = Depends(get_current_superuser),
+    db: AsyncSession = Depends(get_db),
+):
+    """绑定网关到业务节点"""
+    node = await BusinessNodeService.get_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Business node not found",
+        )
+    node = await BusinessNodeService.update_gateway(db, node, gateway_in.gateway_id)
+    return node
+
+
+@router.get("/{node_id}/hosts")
+async def get_business_node_hosts(
+    node_id: int,
+    include_children: bool = Query(True, description="Include hosts from child nodes"),
+    only_enabled: bool = Query(True, description="Only show enabled hosts"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取业务节点及其子节点的所有主机"""
+    # Check if node exists and user has permission
+    node = await BusinessNodeService.get_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Business node not found",
+        )
+    # TODO: Add permission check, Host model, and actual implementation
+    return {"items": [], "total": 0}
+

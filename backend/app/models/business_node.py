@@ -24,4 +24,5 @@ class BusinessNode(Base):
 
     # 其他关系
     creator = relationship("User", foreign_keys=[created_by])
+    permissions = relationship("BusinessNodePermission", back_populates="business_node", cascade="all, delete-orphan")
     # gateway = relationship("Gateway", foreign_keys=[gateway_id])  # 后续实现

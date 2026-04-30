@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import decode_token
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.services.auth import AuthService
 
 # Token黑名单（生产环境应该使用Redis）
@@ -75,8 +75,8 @@ async def get_current_user(
 async def get_current_superuser(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """获取当前超级管理员"""
-    if not current_user.is_superuser:
+    """获取当前超级管理员（向后兼容，建议直接检查 role）"""
+    if current_user.role != UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="需要超级管理员权限",

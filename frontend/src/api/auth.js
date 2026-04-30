@@ -2,7 +2,7 @@ import request from '@/utils/request'
 import { mockLogin, mockLogout, mockGetCurrentUser } from '@/utils/mock'
 
 // 使用 Mock API（后端完成前）
-const useMock = true
+const useMock = false
 
 export const login = (data) => {
   if (useMock) return mockLogin(data)

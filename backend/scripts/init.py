@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import AsyncSessionLocal
 from app.services.user import UserService
+from app.models.user import UserRole
 
 
 async def create_default_admin():
@@ -27,8 +28,9 @@ async def create_default_admin():
             username="admin",
             email="admin@example.com",
             password="admin123",
-            is_superuser=True,
             is_active=True,
+            role=UserRole.SUPER_ADMIN,
+            real_name="超级管理员",
         )
         print(f"管理员创建成功！")
         print(f"用户名: {user.username}")

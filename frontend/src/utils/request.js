@@ -31,23 +31,25 @@ request.interceptors.response.use(
     const authStore = useAuthStore()
     if (error.response) {
       const { status, data } = error.response
+      // 兼容后端返回的 detail 或 message 字段
+      const errorMsg = data?.detail || data?.message || '请求失败'
       switch (status) {
         case 401:
-          ElMessage.error(data.message || '登录已过期，请重新登录')
+          ElMessage.error(errorMsg || '登录已过期，请重新登录')
           authStore.clearAuth()
           router.push({ name: 'login' })
           break
         case 403:
-          ElMessage.error(data.message || '没有权限执行此操作')
+          ElMessage.error(errorMsg || '没有权限执行此操作')
           break
         case 404:
-          ElMessage.error(data.message || '请求的资源不存在')
+          ElMessage.error(errorMsg || '请求的资源不存在')
           break
         case 500:
-          ElMessage.error(data.message || '服务器错误')
+          ElMessage.error(errorMsg || '服务器错误')
           break
         default:
-          ElMessage.error(data.message || '请求失败')
+          ElMessage.error(errorMsg)
       }
     } else {
       ElMessage.error('网络错误，请稍后重试')

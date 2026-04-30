@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
+from datetime import datetime
 from app.core.database import get_db
 from app.core.security import create_access_token, create_refresh_token, decode_token
+from app.core.config import settings
 from app.schemas.auth import (
     LoginRequest,
     TokenResponse,
@@ -29,14 +32,26 @@ async def login(
             detail="用户名或密码错误"
         )
 
+    # 更新最后登录时间
+    await db.execute(
+        update(User).where(User.id == user.id).values(last_login_at=datetime.utcnow())
+    )
+    await db.commit()
+    await db.refresh(user)
+
     # 创建令牌
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
 
+    # expires_in 是秒数
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        token_type="bearer"
+        token_type="bearer",
+        expires_in=expires_in,
+        user=UserResponse.model_validate(user)
     )
 
 
@@ -68,10 +83,15 @@ async def refresh_token(
     # 将旧的refresh token加入黑名单
     add_token_to_blacklist(request.refresh_token)
 
+    # expires_in 是秒数
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh_token,
-        token_type="bearer"
+        token_type="bearer",
+        expires_in=expires_in,
+        user=UserResponse.model_validate(user)
     )
 
 

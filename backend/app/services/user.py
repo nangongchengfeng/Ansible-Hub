@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.core.security import get_password_hash
 
 
@@ -32,15 +32,15 @@ class UserService:
         skip: int = 0,
         limit: int = 100,
         is_active: Optional[bool] = None,
-        is_superuser: Optional[bool] = None,
+        role: Optional[UserRole] = None,
     ) -> tuple[int, list[User]]:
         """获取用户列表"""
         # 构建查询条件
         conditions = []
         if is_active is not None:
             conditions.append(User.is_active == is_active)
-        if is_superuser is not None:
-            conditions.append(User.is_superuser == is_superuser)
+        if role is not None:
+            conditions.append(User.role == role)
 
         # 总数查询
         count_query = select(func.count(User.id))
@@ -66,7 +66,9 @@ class UserService:
         email: str,
         password: str,
         is_active: bool = True,
-        is_superuser: bool = False,
+        role: UserRole = UserRole.OPERATOR,
+        real_name: Optional[str] = None,
+        created_by: Optional[int] = None,
     ) -> User:
         """创建用户"""
         hashed_password = get_password_hash(password)
@@ -75,7 +77,9 @@ class UserService:
             email=email,
             hashed_password=hashed_password,
             is_active=is_active,
-            is_superuser=is_superuser,
+            role=role,
+            real_name=real_name,
+            created_by=created_by,
         )
         db.add(user)
         await db.commit()
@@ -88,18 +92,21 @@ class UserService:
         user: User,
         username: Optional[str] = None,
         email: Optional[str] = None,
+        real_name: Optional[str] = None,
+        role: Optional[UserRole] = None,
         is_active: Optional[bool] = None,
-        is_superuser: Optional[bool] = None,
     ) -> User:
         """更新用户"""
         if username is not None:
             user.username = username
         if email is not None:
             user.email = email
+        if real_name is not None:
+            user.real_name = real_name
+        if role is not None:
+            user.role = role
         if is_active is not None:
             user.is_active = is_active
-        if is_superuser is not None:
-            user.is_superuser = is_superuser
 
         await db.commit()
         await db.refresh(user)

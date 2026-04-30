@@ -10,6 +10,7 @@ from app.schemas.host import (
     HostResponse,
     HostDetailResponse,
     HostMoveRequest,
+    ResolvedConnectionConfig,
 )
 from app.services.host import HostService
 
@@ -74,8 +75,25 @@ async def get_host(
         )
     # Create response object with resolved connection
     response = HostDetailResponse.model_validate(host)
-    response.resolved_connection = HostService.resolve_connection_config(host)
+    response.resolved_connection = await HostService.resolve_connection_config(db, host)
     return response
+
+
+@router.get("/{host_id}/connection-config", response_model=ResolvedConnectionConfig)
+async def get_host_connection_config(
+    host_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取主机的完整连接配置（含继承）"""
+    host = await HostService.get_by_id(db, host_id)
+    if not host:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="主机不存在",
+        )
+    connection_config = await HostService.resolve_connection_config(db, host)
+    return connection_config
 
 
 @router.put("/{host_id}", response_model=HostResponse)

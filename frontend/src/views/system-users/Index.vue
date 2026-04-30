@@ -105,6 +105,7 @@ import { useAuthStore } from '@/stores/auth'
 const loading = ref(false)
 const submitLoading = ref(false)
 const users = ref([])
+const showPrivateKeys = ref({})
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('创建系统用户')
@@ -130,6 +131,14 @@ const formRules = {
 
 const authStore = useAuthStore()
 
+const canViewSensitive = (row) => {
+  // 只有超级管理员或创建者可以查看敏感信息
+  if (!authStore.user) return false
+  return authStore.user.role === 'super_admin' ||
+         authStore.user.role === 'superadmin' ||
+         authStore.user.id === row.createdBy
+}
+
 const formatValidationError = (error) => {
   if (error?.response?.data?.detail) {
     if (Array.isArray(error.response.data.detail)) {
@@ -148,6 +157,11 @@ const fetchData = async () => {
   try {
     const res = await getSystemUsers()
     users.value = res.data
+    // 初始化私钥显示
+    showPrivateKeys.value = {}
+    users.value.forEach(user => {
+      showPrivateKeys.value[user.id] = user.privateKey || ''
+    })
   } catch (error) {
     ElMessage.error(formatValidationError(error))
   } finally {

@@ -1,7 +1,7 @@
 """add-system-users-gateways
 
-Revision ID: 004
-Revises: 003
+Revision ID: 005
+Revises: 004
 Create Date: 2026-04-30
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '004'
-down_revision = '003'
+revision = '005'
+down_revision = '004'
 branch_labels = None
 depends_on = None
 

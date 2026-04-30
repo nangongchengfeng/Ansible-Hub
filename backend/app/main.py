@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.middleware import AuditLogMiddleware
 from app.api import (
     auth_router,
     users_router,
@@ -26,6 +27,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 审计日志中间件
+app.add_middleware(AuditLogMiddleware)
 
 # 全局异常处理器 - 确保错误响应也有CORS头
 @app.exception_handler(Exception)

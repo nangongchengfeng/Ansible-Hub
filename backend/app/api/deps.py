@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -11,6 +11,42 @@ from app.services.auth import AuthService
 token_blacklist: set[str] = set()
 
 security = HTTPBearer()
+
+
+async def get_current_user_from_request(
+    request: Request,
+    db: AsyncSession
+) -> Optional[User]:
+    """从请求中获取当前用户（不抛出异常，失败返回None）"""
+    try:
+        # 尝试从Authorization头获取token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None
+
+        token = auth_header.split(' ')[1]
+
+        # 检查token是否在黑名单
+        if token in token_blacklist:
+            return None
+
+        # 解码token
+        payload = decode_token(token)
+        if not payload or payload.get("type") != "access":
+            return None
+
+        username: Optional[str] = payload.get("sub")
+        if not username:
+            return None
+
+        # 获取用户
+        user = await AuthService.get_user_by_username(db, username)
+        if not user or not user.is_active:
+            return None
+
+        return user
+    except Exception:
+        return None
 
 
 async def get_token_payload(

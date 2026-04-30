@@ -21,11 +21,11 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    request: LoginRequest,
+    login_request: LoginRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """用户登录"""
-    user = await AuthService.authenticate_user(db, request.username, request.password)
+    user = await AuthService.authenticate_user(db, login_request.username, login_request.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -95,14 +95,35 @@ class AuditLogService:
         db.add(log)
         await db.commit()
         await db.refresh(log)
+        return log
 
-        # Load relationships
-        result = await db.execute(
-            select(AuditLog)
-            .where(AuditLog.id == log.id)
-            .options(selectinload(AuditLog.user))
+    @staticmethod
+    async def log_action(
+        db: AsyncSession,
+        user: Optional[User],
+        action: str,
+        resource_type: str,
+        resource_id: Optional[int] = None,
+        resource_name: Optional[str] = None,
+        old_values: Optional[Dict[str, Any]] = None,
+        new_values: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ):
+        """记录审计日志（便捷方法）"""
+        log_in = AuditLogCreate(
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            resource_name=resource_name,
+            old_values=old_values,
+            new_values=new_values,
+            user_id=user.id if user else None,
+            username=user.username if user else None,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
-        return result.scalar_one_or_none()
+        await AuditLogService.create(db, log_in)
 
 
 def audit_log(

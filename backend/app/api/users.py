@@ -85,6 +85,7 @@ async def create_user(
         real_name=user_in.real_name,
         created_by=current_user.id,
     )
+
     return user
 
 
@@ -157,6 +158,7 @@ async def update_user(
         role=user_in.role,
         is_active=user_in.is_active,
     )
+
     return user
 
 
@@ -181,6 +183,7 @@ async def reset_user_password(
         )
 
     await UserService.reset_password(db, user, password_in.newPassword)
+
     return {"message": "密码重置成功"}
 
 
@@ -211,4 +214,5 @@ async def delete_user(
         )
 
     await UserService.delete_user(db, user)
+
     return None

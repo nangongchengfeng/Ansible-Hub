@@ -16,6 +16,9 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
+# 别名，方便使用
+async_session_factory = AsyncSessionLocal
+
 
 class Base(DeclarativeBase):
     """SQLAlchemy基类"""

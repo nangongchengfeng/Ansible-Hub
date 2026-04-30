@@ -6,6 +6,7 @@ from .gateway import GatewayService
 from .host import HostService
 from .script import ScriptService
 from .playbook import PlaybookService
+from .command_filter_rule import CommandFilterRuleService
 
-__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService"]
+__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService", "CommandFilterRuleService"]
 

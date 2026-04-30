@@ -6,5 +6,6 @@ from .gateway import Gateway
 from .host import Host
 from .script import Script, ScriptVersion
 from .playbook import Playbook, PlaybookVersion
+from .command_filter_rule import CommandFilterRule, MatchType, ActionType
 
-__all__ = ["User", "BusinessNode", "BusinessNodePermission", "SystemUser", "Gateway", "Host", "Script", "ScriptVersion", "Playbook", "PlaybookVersion"]
+__all__ = ["User", "BusinessNode", "BusinessNodePermission", "SystemUser", "Gateway", "Host", "Script", "ScriptVersion", "Playbook", "PlaybookVersion", "CommandFilterRule", "MatchType", "ActionType"]

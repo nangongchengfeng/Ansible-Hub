@@ -15,6 +15,11 @@
         <el-table-column prop="name" label="名称" width="180" />
         <el-table-column prop="host" label="主机地址" width="180" />
         <el-table-column prop="port" label="端口" width="100" />
+        <el-table-column label="系统用户" width="150">
+          <template #default="{ row }">
+            {{ row.systemUser?.name || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)">
@@ -46,6 +51,11 @@
         <el-form-item label="端口" prop="port">
           <el-input-number v-model="formData.port" :min="1" :max="65535" />
         </el-form-item>
+        <el-form-item label="系统用户" prop="systemUserId">
+          <el-select v-model="formData.systemUserId" placeholder="请选择系统用户" clearable>
+            <el-option v-for="user in systemUsers" :key="user.id" :label="user.name" :value="user.id" />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -62,10 +72,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { getGateways, createGateway, updateGateway, deleteGateway } from '@/api/gateways'
+import { getSystemUsers } from '@/api/system-users'
 
 const loading = ref(false)
 const submitLoading = ref(false)
 const gateways = ref([])
+const systemUsers = ref([])
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('创建网关')
@@ -76,21 +88,40 @@ const editingId = ref(null)
 const formData = reactive({
   name: '',
   host: '',
-  port: 22
+  port: 22,
+  systemUserId: null
 })
 
 const formRules = {
   name: [{ required: true, message: '请输入网关名称', trigger: 'blur' }],
-  host: [{ required: true, message: '请输入主机地址', trigger: 'blur' }]
+  host: [{ required: true, message: '请输入主机地址', trigger: 'blur' }],
+  systemUserId: [{ required: true, message: '请选择系统用户', trigger: 'change' }]
+}
+
+const formatValidationError = (error) => {
+  if (error?.response?.data?.detail) {
+    if (Array.isArray(error.response.data.detail)) {
+      return error.response.data.detail.map(err => err.msg).join('\n')
+    }
+    return error.response.data.detail
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return '操作失败，请重试'
 }
 
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await getGateways()
-    gateways.value = res.data
+    const [resGateways, resSystemUsers] = await Promise.all([
+      getGateways(),
+      getSystemUsers()
+    ])
+    gateways.value = resGateways.data
+    systemUsers.value = resSystemUsers.data
   } catch (error) {
-    ElMessage.error('获取网关列表失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     loading.value = false
   }
@@ -100,8 +131,12 @@ const resetForm = () => {
   formData.name = ''
   formData.host = ''
   formData.port = 22
+  formData.systemUserId = null
   isEdit.value = false
   editingId.value = null
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 const handleCreate = () => {
@@ -117,6 +152,7 @@ const handleEdit = (row) => {
   formData.name = row.name
   formData.host = row.host
   formData.port = row.port
+  formData.systemUserId = row.systemUserId
   dialogVisible.value = true
 }
 
@@ -132,7 +168,7 @@ const handleDelete = async (row) => {
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
@@ -155,7 +191,7 @@ const handleSubmit = async () => {
       dialogVisible.value = false
       await fetchData()
     } catch (error) {
-      ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+      ElMessage.error(formatValidationError(error))
     } finally {
       submitLoading.value = false
     }

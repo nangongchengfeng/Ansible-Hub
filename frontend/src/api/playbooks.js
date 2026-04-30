@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 export const getPlaybooks = async () => {
-  // TODO: 对接真实API
+  // TODO: 等后端API完成后对接
   return { data: [] }
 }
 
@@ -18,12 +18,10 @@ export const deletePlaybook = (id) => {
 }
 
 export const getPlaybookVersions = async (id) => {
-  // TODO: 对接真实API
   return { data: [] }
 }
 
 export const getPlaybookVersion = async (playbookId, versionId) => {
-  // TODO: 对接真实API
   return { data: null }
 }
 

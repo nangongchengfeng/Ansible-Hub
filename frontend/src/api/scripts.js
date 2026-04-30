@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 export const getScripts = async () => {
-  // TODO: 对接真实API
+  // TODO: 等后端API完成后对接
   return { data: [] }
 }
 
@@ -18,12 +18,10 @@ export const deleteScript = (id) => {
 }
 
 export const getScriptVersions = async (id) => {
-  // TODO: 对接真实API
   return { data: [] }
 }
 
 export const getScriptVersion = async (scriptId, versionId) => {
-  // TODO: 对接真实API
   return { data: null }
 }
 

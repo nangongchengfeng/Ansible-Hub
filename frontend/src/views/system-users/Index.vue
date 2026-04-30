@@ -105,7 +105,6 @@ import { useAuthStore } from '@/stores/auth'
 const loading = ref(false)
 const submitLoading = ref(false)
 const users = ref([])
-const showPrivateKeys = reactive({})
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('创建系统用户')
@@ -131,9 +130,17 @@ const formRules = {
 
 const authStore = useAuthStore()
 
-const canViewSensitive = (row) => {
-  // 超级管理员或创建者可以查看
-  return authStore.user?.role === 'superadmin' || row.createdBy === authStore.user?.username
+const formatValidationError = (error) => {
+  if (error?.response?.data?.detail) {
+    if (Array.isArray(error.response.data.detail)) {
+      return error.response.data.detail.map(err => err.msg).join('\n')
+    }
+    return error.response.data.detail
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return '操作失败，请重试'
 }
 
 const fetchData = async () => {
@@ -141,14 +148,8 @@ const fetchData = async () => {
   try {
     const res = await getSystemUsers()
     users.value = res.data
-    // 初始化私钥显示
-    users.value.forEach(user => {
-      if (user.authType === 'key') {
-        showPrivateKeys[user.id] = user.privateKey
-      }
-    })
   } catch (error) {
-    ElMessage.error('获取系统用户失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     loading.value = false
   }
@@ -162,6 +163,9 @@ const resetForm = () => {
   formData.privateKey = ''
   isEdit.value = false
   editingId.value = null
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 const handleCreate = () => {
@@ -177,8 +181,8 @@ const handleEdit = (row) => {
   formData.name = row.name
   formData.username = row.username
   formData.authType = row.authType
-  formData.password = row.password || ''
-  formData.privateKey = row.privateKey || ''
+  formData.password = ''
+  formData.privateKey = ''
   dialogVisible.value = true
 }
 
@@ -194,7 +198,7 @@ const handleDelete = async (row) => {
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
@@ -218,10 +222,10 @@ const handleSubmit = async () => {
       if (isEdit.value) {
         // 只发送修改的字段
         const updateData = { name: formData.name }
-        if (formData.authType === 'password' && formData.password) {
+        if (formData.password) {
           updateData.password = formData.password
         }
-        if (formData.authType === 'key' && formData.privateKey) {
+        if (formData.privateKey) {
           updateData.privateKey = formData.privateKey
         }
         await updateSystemUser(editingId.value, updateData)
@@ -233,7 +237,7 @@ const handleSubmit = async () => {
       dialogVisible.value = false
       await fetchData()
     } catch (error) {
-      ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+      ElMessage.error(formatValidationError(error))
     } finally {
       submitLoading.value = false
     }

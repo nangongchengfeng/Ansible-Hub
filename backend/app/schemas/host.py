@@ -63,6 +63,12 @@ class HostResponse(HostBase):
         from_attributes = True
 
 
+class HostListResponse(BaseModel):
+    """主机列表响应"""
+    total: int
+    items: List[HostResponse]
+
+
 class HostDetailResponse(HostResponse):
     """主机详情响应"""
     resolved_connection: Optional["ResolvedConnectionConfig"] = None

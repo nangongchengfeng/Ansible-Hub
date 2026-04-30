@@ -9,8 +9,8 @@ from app.schemas.gateway import (
     GatewayCreate,
     GatewayUpdate,
     GatewayResponse,
+    GatewayListResponse,
     GatewayDetailResponse,
-    SystemUserSimple,
 )
 from app.services.gateway import GatewayService
 from app.services.system_user import SystemUserService
@@ -18,29 +18,7 @@ from app.services.system_user import SystemUserService
 router = APIRouter(prefix="/gateways", tags=["网关"])
 
 
-def build_gateway_response(gateway):
-    """构建网关响应而不修改ORM对象"""
-    system_user = None
-    if gateway.system_user:
-        system_user = SystemUserSimple(
-            id=gateway.system_user.id,
-            name=gateway.system_user.name,
-            username=gateway.system_user.username,
-        )
-    return GatewayResponse(
-        id=gateway.id,
-        name=gateway.name,
-        ip=gateway.ip,
-        port=gateway.port,
-        system_user_id=gateway.system_user_id,
-        system_user=system_user,
-        created_by=gateway.created_by,
-        created_at=gateway.created_at,
-        updated_at=gateway.updated_at,
-    )
-
-
-@router.get("", response_model=List[GatewayResponse])
+@router.get("", response_model=GatewayListResponse)
 async def get_gateways(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -52,7 +30,7 @@ async def get_gateways(
     total, gateways = await GatewayService.get_list(
         db=db, skip=skip, limit=limit, search=search
     )
-    return [build_gateway_response(gw) for gw in gateways]
+    return GatewayListResponse(total=total, items=gateways)
 
 
 @router.post("", response_model=GatewayResponse, status_code=status.HTTP_201_CREATED)
@@ -73,7 +51,7 @@ async def create_gateway(
     gateway = await GatewayService.create(
         db=db, gateway_in=gateway_in, created_by=current_user.id
     )
-    return build_gateway_response(gateway)
+    return gateway
 
 
 @router.get("/{gateway_id}", response_model=GatewayDetailResponse)
@@ -89,24 +67,7 @@ async def get_gateway(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="网关不存在"
         )
-    system_user = None
-    if gateway.system_user:
-        system_user = SystemUserSimple(
-            id=gateway.system_user.id,
-            name=gateway.system_user.name,
-            username=gateway.system_user.username,
-        )
-    return GatewayDetailResponse(
-        id=gateway.id,
-        name=gateway.name,
-        ip=gateway.ip,
-        port=gateway.port,
-        system_user_id=gateway.system_user_id,
-        system_user=system_user,
-        created_by=gateway.created_by,
-        created_at=gateway.created_at,
-        updated_at=gateway.updated_at,
-    )
+    return gateway
 
 
 @router.put("/{gateway_id}", response_model=GatewayResponse)
@@ -133,7 +94,7 @@ async def update_gateway(
             )
 
     gateway = await GatewayService.update(db, gateway, gateway_in)
-    return build_gateway_response(gateway)
+    return gateway
 
 
 @router.delete("/{gateway_id}", status_code=status.HTTP_204_NO_CONTENT)

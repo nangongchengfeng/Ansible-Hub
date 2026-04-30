@@ -9,6 +9,7 @@ from app.schemas.command_filter_rule import (
     CommandFilterRuleCreate,
     CommandFilterRuleUpdate,
     CommandFilterRuleResponse,
+    CommandFilterRuleListResponse,
     CommandFilterRuleDetailResponse,
     CommandCheckRequest,
     CommandCheckResponse,
@@ -19,7 +20,7 @@ from app.services.command_filter_rule import CommandFilterRuleService
 router = APIRouter(prefix="/command-filter-rules", tags=["命令过滤规则"])
 
 
-@router.get("", response_model=List[CommandFilterRuleResponse])
+@router.get("", response_model=CommandFilterRuleListResponse)
 async def get_command_filter_rules(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -32,7 +33,7 @@ async def get_command_filter_rules(
     total, rules = await CommandFilterRuleService.get_list(
         db=db, skip=skip, limit=limit, is_enabled=is_enabled, match_type=match_type
     )
-    return rules
+    return CommandFilterRuleListResponse(total=total, items=rules)
 
 
 @router.post("", response_model=CommandFilterRuleResponse, status_code=status.HTTP_201_CREATED)

@@ -9,6 +9,7 @@ from app.schemas.script import (
     ScriptCreate,
     ScriptUpdate,
     ScriptResponse,
+    ScriptListResponse,
     ScriptDetailResponse,
     ScriptVersionSimple,
     ScriptVersionDetail,
@@ -21,7 +22,7 @@ from app.services.script import ScriptService
 router = APIRouter(prefix="/scripts", tags=["脚本管理"])
 
 
-@router.get("", response_model=List[ScriptResponse])
+@router.get("", response_model=ScriptListResponse)
 async def get_scripts(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -34,7 +35,7 @@ async def get_scripts(
     total, scripts = await ScriptService.get_list(
         db=db, skip=skip, limit=limit, search=search, language=language
     )
-    return scripts
+    return ScriptListResponse(total=total, items=scripts)
 
 
 @router.post("", response_model=ScriptResponse, status_code=status.HTTP_201_CREATED)

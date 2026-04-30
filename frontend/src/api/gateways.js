@@ -21,7 +21,8 @@ export const getGateways = async () => {
   const res = await request.get('/gateways')
   return {
     ...res,
-    data: res.data.map(transformFromBackend)
+    total: res.data.total,
+    data: res.data.items.map(transformFromBackend)
   }
 }
 

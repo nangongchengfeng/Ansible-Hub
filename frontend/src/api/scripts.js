@@ -28,7 +28,8 @@ const transformScriptToBackend = (data) => ({
 export const getScripts = async (params) => {
   const res = await request.get('/scripts', { params })
   return {
-    data: (res.data || []).map(transformScriptFromBackend)
+    total: res.data.total,
+    data: (res.data.items || []).map(transformScriptFromBackend)
   }
 }
 
@@ -54,7 +55,8 @@ export const deleteScript = (id) => {
 export const getScriptVersions = async (id, params) => {
   const res = await request.get(`/scripts/${id}/versions`, { params })
   return {
-    data: (res.data.items || res.data || []).map(transformVersionFromBackend)
+    total: res.data.total,
+    data: (res.data.items || []).map(transformVersionFromBackend)
   }
 }
 

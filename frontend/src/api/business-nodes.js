@@ -26,6 +26,19 @@ export const getBusinessNodes = async () => {
   }
 }
 
+export const getBusinessNodesList = async (params) => {
+  const backendParams = {}
+  if (params?.parentId !== undefined) {
+    backendParams.parent_id = params.parentId
+  }
+  const res = await request.get('/business-nodes', { params: backendParams })
+  return {
+    ...res,
+    total: res.data.total,
+    data: res.data.items.map(transformNodeFromBackend)
+  }
+}
+
 export const getGateways = () => {
   // TODO: 网关API对接
   return Promise.resolve({ data: [] })

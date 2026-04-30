@@ -8,6 +8,7 @@ from app.schemas.host import (
     HostCreate,
     HostUpdate,
     HostResponse,
+    HostListResponse,
     HostDetailResponse,
     HostMoveRequest,
     ResolvedConnectionConfig,
@@ -17,7 +18,7 @@ from app.services.host import HostService
 router = APIRouter(prefix="/hosts", tags=["主机管理"])
 
 
-@router.get("", response_model=List[HostResponse])
+@router.get("", response_model=HostListResponse)
 async def get_hosts(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -36,7 +37,7 @@ async def get_hosts(
         is_enabled=is_enabled,
         search=search,
     )
-    return hosts
+    return HostListResponse(total=total, items=hosts)
 
 
 @router.post("", response_model=HostResponse, status_code=status.HTTP_201_CREATED)

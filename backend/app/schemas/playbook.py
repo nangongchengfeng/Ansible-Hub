@@ -44,6 +44,12 @@ class PlaybookResponse(PlaybookBase):
         from_attributes = True
 
 
+class PlaybookListResponse(BaseModel):
+    """剧本列表响应"""
+    total: int
+    items: List[PlaybookResponse]
+
+
 class PlaybookVersionSimple(BaseModel):
     """剧本版本简单信息"""
     id: int

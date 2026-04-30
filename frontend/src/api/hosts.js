@@ -41,7 +41,8 @@ export const getHosts = async (params) => {
   const res = await request.get('/hosts', { params: backendParams })
   return {
     ...res,
-    data: res.data.map(transformFromBackend)
+    total: res.data.total,
+    data: res.data.items.map(transformFromBackend)
   }
 }
 

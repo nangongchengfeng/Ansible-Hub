@@ -2,7 +2,6 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.security import decrypt_data
 from app.api.deps import get_current_user, get_current_superuser
 from app.models.user import User
 from app.models.system_user import SystemUser
@@ -10,6 +9,7 @@ from app.schemas.system_user import (
     SystemUserCreate,
     SystemUserUpdate,
     SystemUserResponse,
+    SystemUserListResponse,
     SystemUserDetailResponse,
 )
 from app.services.system_user import SystemUserService
@@ -17,7 +17,7 @@ from app.services.system_user import SystemUserService
 router = APIRouter(prefix="/system-users", tags=["系统用户"])
 
 
-@router.get("", response_model=List[SystemUserResponse])
+@router.get("", response_model=SystemUserListResponse)
 async def get_system_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -30,25 +30,12 @@ async def get_system_users(
     total, system_users = await SystemUserService.get_list(
         db=db, skip=skip, limit=limit, auth_type=auth_type, search=search
     )
-    # 构建响应而不修改ORM对象
-    result = []
+    # Set can_view_secret for each user
     for su in system_users:
         is_owner = su.created_by == current_user.id
         is_super_admin = getattr(current_user, "role", None) in ["super_admin", "superadmin"]
-        item = SystemUserResponse(
-            id=su.id,
-            name=su.name,
-            username=su.username,
-            auth_type=su.auth_type,
-            become_method=su.become_method,
-            become_username=su.become_username,
-            created_by=su.created_by,
-            created_at=su.created_at,
-            updated_at=su.updated_at,
-            can_view_secret=is_owner or is_super_admin,
-        )
-        result.append(item)
-    return result
+        su.can_view_secret = is_owner or is_super_admin
+    return SystemUserListResponse(total=total, items=system_users)
 
 
 @router.post("", response_model=SystemUserResponse, status_code=status.HTTP_201_CREATED)
@@ -73,18 +60,8 @@ async def create_system_user(
     system_user = await SystemUserService.create(
         db=db, system_user_in=system_user_in, created_by=current_user.id
     )
-    return SystemUserResponse(
-        id=system_user.id,
-        name=system_user.name,
-        username=system_user.username,
-        auth_type=system_user.auth_type,
-        become_method=system_user.become_method,
-        become_username=system_user.become_username,
-        created_by=system_user.created_by,
-        created_at=system_user.created_at,
-        updated_at=system_user.updated_at,
-        can_view_secret=True,
-    )
+    system_user.can_view_secret = True
+    return system_user
 
 
 @router.get("/{system_user_id}", response_model=SystemUserDetailResponse)
@@ -100,31 +77,9 @@ async def get_system_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="系统用户不存在"
         )
-    # Fill sensitive fields if authorized and build response
-    is_owner = system_user.created_by == current_user.id
-    is_super_admin = getattr(current_user, "role", None) in ["super_admin", "superadmin"]
-
-    response = SystemUserDetailResponse(
-        id=system_user.id,
-        name=system_user.name,
-        username=system_user.username,
-        auth_type=system_user.auth_type,
-        become_method=system_user.become_method,
-        become_username=system_user.become_username,
-        created_by=system_user.created_by,
-        created_at=system_user.created_at,
-        updated_at=system_user.updated_at,
-    )
-
-    if is_owner or is_super_admin:
-        if system_user.private_key_cipher:
-            response.private_key = decrypt_data(system_user.private_key_cipher)
-        if system_user.password_cipher:
-            response.password = decrypt_data(system_user.password_cipher)
-        if system_user.become_password_cipher:
-            response.become_password = decrypt_data(system_user.become_password_cipher)
-
-    return response
+    # Fill sensitive fields if authorized
+    system_user = SystemUserService.fill_sensitive_fields(system_user, current_user)
+    return system_user
 
 
 @router.put("/{system_user_id}", response_model=SystemUserResponse)
@@ -142,20 +97,11 @@ async def update_system_user(
             detail="系统用户不存在"
         )
     system_user = await SystemUserService.update(db, system_user, system_user_in)
+    # Set can_view_secret
     is_owner = system_user.created_by == current_user.id
     is_super_admin = getattr(current_user, "role", None) in ["super_admin", "superadmin"]
-    return SystemUserResponse(
-        id=system_user.id,
-        name=system_user.name,
-        username=system_user.username,
-        auth_type=system_user.auth_type,
-        become_method=system_user.become_method,
-        become_username=system_user.become_username,
-        created_by=system_user.created_by,
-        created_at=system_user.created_at,
-        updated_at=system_user.updated_at,
-        can_view_secret=is_owner or is_super_admin,
-    )
+    system_user.can_view_secret = is_owner or is_super_admin
+    return system_user
 
 
 @router.delete("/{system_user_id}", status_code=status.HTTP_204_NO_CONTENT)

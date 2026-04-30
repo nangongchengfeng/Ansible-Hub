@@ -49,6 +49,12 @@ class BusinessNodeResponse(BusinessNodeBase):
         from_attributes = True
 
 
+class BusinessNodeListResponse(BaseModel):
+    """业务节点列表响应"""
+    total: int
+    items: List[BusinessNodeResponse]
+
+
 class BusinessNodeTreeItem(BusinessNodeBase):
     """业务节点树状结构项"""
     id: int

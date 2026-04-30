@@ -9,6 +9,7 @@ from app.schemas.playbook import (
     PlaybookCreate,
     PlaybookUpdate,
     PlaybookResponse,
+    PlaybookListResponse,
     PlaybookDetailResponse,
     PlaybookVersionSimple,
     PlaybookVersionDetail,
@@ -21,7 +22,7 @@ from app.services.playbook import PlaybookService
 router = APIRouter(prefix="/playbooks", tags=["剧本管理"])
 
 
-@router.get("", response_model=List[PlaybookResponse])
+@router.get("", response_model=PlaybookListResponse)
 async def get_playbooks(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -33,7 +34,7 @@ async def get_playbooks(
     total, playbooks = await PlaybookService.get_list(
         db=db, skip=skip, limit=limit, search=search
     )
-    return playbooks
+    return PlaybookListResponse(total=total, items=playbooks)
 
 
 @router.post("", response_model=PlaybookResponse, status_code=status.HTTP_201_CREATED)

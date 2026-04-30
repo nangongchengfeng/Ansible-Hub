@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -50,6 +50,12 @@ class SystemUserResponse(SystemUserBase):
 
     class Config:
         from_attributes = True
+
+
+class SystemUserListResponse(BaseModel):
+    """系统用户列表响应"""
+    total: int
+    items: List[SystemUserResponse]
 
 
 class SystemUserDetailResponse(SystemUserBase):

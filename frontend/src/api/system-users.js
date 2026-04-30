@@ -23,7 +23,8 @@ export const getSystemUsers = async () => {
   const res = await request.get('/system-users')
   return {
     ...res,
-    data: res.data.map(transformFromBackend)
+    total: res.data.total,
+    data: res.data.items.map(transformFromBackend)
   }
 }
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.schemas.system_user import SystemUserSimple
 from app.schemas.user import UserSimple
@@ -45,6 +45,12 @@ class GatewayResponse(GatewayBase):
 
     class Config:
         from_attributes = True
+
+
+class GatewayListResponse(BaseModel):
+    """网关列表响应"""
+    total: int
+    items: List[GatewayResponse]
 
 
 class GatewayDetailResponse(GatewayBase):

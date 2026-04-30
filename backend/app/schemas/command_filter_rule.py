@@ -50,6 +50,12 @@ class CommandFilterRuleResponse(CommandFilterRuleBase):
         from_attributes = True
 
 
+class CommandFilterRuleListResponse(BaseModel):
+    """命令过滤规则列表响应"""
+    total: int
+    items: List[CommandFilterRuleResponse]
+
+
 class CommandFilterRuleDetailResponse(CommandFilterRuleBase):
     """命令过滤规则详情响应"""
     id: int

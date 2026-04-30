@@ -45,6 +45,12 @@ class ScriptResponse(ScriptBase):
         from_attributes = True
 
 
+class ScriptListResponse(BaseModel):
+    """脚本列表响应"""
+    total: int
+    items: List[ScriptResponse]
+
+
 class ScriptVersionSimple(BaseModel):
     """脚本版本简单信息"""
     id: int

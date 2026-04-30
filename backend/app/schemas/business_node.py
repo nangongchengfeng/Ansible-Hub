@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from app.schemas.user import UserSimple
 
 
 class BusinessNodeBase(BaseModel):
@@ -58,4 +61,46 @@ class BusinessNodeTreeItem(BusinessNodeBase):
         from_attributes = True
 
 
+class BusinessNodePermissionBase(BaseModel):
+    """Business node permission base"""
+    user_id: int
+    permission_type: str = Field(..., description="Permission type: view, execute, manage")
+
+
+class BusinessNodePermissionCreate(BusinessNodePermissionBase):
+    """Create business node permission"""
+    pass
+
+
+class BusinessNodePermissionResponse(BusinessNodePermissionBase):
+    """Business node permission response"""
+    id: int
+    business_node_id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class BusinessNodePermissionWithUser(BusinessNodePermissionResponse):
+    """Business node permission with user info"""
+    user: "UserSimple"
+
+    class Config:
+        from_attributes = True
+
+
+class BusinessNodePermissionsUpdate(BaseModel):
+    """Update business node permissions (overwrite)"""
+    permissions: List[BusinessNodePermissionCreate]
+
+
+class BusinessNodeGatewayUpdate(BaseModel):
+    """Update business node gateway"""
+    gateway_id: Optional[int] = None
+
+
+# Rebuild models with forward references
+from app.schemas.user import UserSimple
 BusinessNodeTreeItem.model_rebuild()
+BusinessNodePermissionWithUser.model_rebuild()

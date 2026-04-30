@@ -12,5 +12,5 @@ async def test_users_routes_exist():
         base_url="http://test"
     ) as client:
         # 测试需要认证
-        response = await client.get("/users")
+        response = await client.get("/api/users")
         assert response.status_code in [200, 401, 403]

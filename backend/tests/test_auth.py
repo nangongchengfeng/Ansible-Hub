@@ -12,14 +12,14 @@ async def test_auth_routes_exist():
         base_url="http://test"
     ) as client:
         # 测试登录路由返回422（因为缺少数据，但证明路由存在）
-        response = await client.post("/auth/login", json={})
+        response = await client.post("/api/auth/login", json={})
         assert response.status_code in [200, 401, 422]
 
         # 测试refresh路由
-        response = await client.post("/auth/refresh", json={})
+        response = await client.post("/api/auth/refresh", json={})
         assert response.status_code in [200, 401, 422]
 
         # 测试me路由（需要认证）
-        response = await client.get("/auth/me")
+        response = await client.get("/api/auth/me")
         assert response.status_code in [200, 401, 403]
 

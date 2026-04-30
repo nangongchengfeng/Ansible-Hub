@@ -29,22 +29,31 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """创建用户"""
     password: str = Field(..., min_length=6, max_length=128)
-    real_name: Optional[str] = Field(None, max_length=50)
+    real_name: Optional[str] = Field(None, max_length=50, alias="name")
     role: UserRole = UserRole.OPERATOR
+
+    class Config:
+        populate_by_name = True
 
 
 class UserUpdate(BaseModel):
     """更新用户"""
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
-    real_name: Optional[str] = Field(None, max_length=50)
+    real_name: Optional[str] = Field(None, max_length=50, alias="name")
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+
+    class Config:
+        populate_by_name = True
 
 
 class UserResetPassword(BaseModel):
     """重置密码"""
-    new_password: str = Field(..., min_length=6, max_length=128)
+    newPassword: str = Field(..., min_length=6, max_length=128, alias="new_password")
+
+    class Config:
+        populate_by_name = True
 
 
 class UserResponse(UserBase):

@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.api.deps import get_current_user
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.user import (
+    UserRole,
     UserCreate,
     UserUpdate,
     UserResetPassword,
@@ -180,7 +181,7 @@ async def reset_user_password(
             detail="用户不存在",
         )
 
-    await UserService.reset_password(db, user, password_in.new_password)
+    await UserService.reset_password(db, user, password_in.newPassword)
     return {"message": "密码重置成功"}
 
 

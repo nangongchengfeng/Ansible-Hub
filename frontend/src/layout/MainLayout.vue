@@ -120,9 +120,9 @@ const isCollapse = ref(false)
 const activeMenu = computed(() => route.path)
 const currentRouteTitle = computed(() => route.meta.title || '')
 
-const isAdmin = computed(() => authStore.user?.role === 'superadmin' || authStore.user?.role === 'super_admin')
+const isAdmin = computed(() => authStore.user?.role === 'superadmin')
 const isAdminOrAuditor = computed(
-  () => ['superadmin', 'super_admin', 'auditor'].includes(authStore.user?.role)
+  () => authStore.user?.role === 'superadmin' || authStore.user?.role === 'auditor'
 )
 
 const toggleCollapse = () => {

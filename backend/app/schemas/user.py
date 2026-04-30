@@ -6,10 +6,17 @@ from enum import Enum
 
 class UserRole(str, Enum):
     """用户角色枚举"""
-    SUPER_ADMIN = "superadmin"
+    SUPER_ADMIN = "super_admin"
     OPERATOR = "operator"
     DEVELOPER = "developer"
     AUDITOR = "auditor"
+
+    @classmethod
+    def _missing_(cls, value):
+        """兼容 superadmin 和 super_admin 两种格式"""
+        if value == "superadmin":
+            return cls.SUPER_ADMIN
+        return super()._missing_(value)
 
 
 class UserBase(BaseModel):
@@ -44,7 +51,7 @@ class UserResponse(UserBase):
     """用户响应"""
     id: int
     real_name: Optional[str] = None
-    role: UserRole
+    role: str  # 直接用字符串
     last_login_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -52,8 +59,11 @@ class UserResponse(UserBase):
     @field_validator("role", mode="before")
     @classmethod
     def validate_role(cls, v):
-        if isinstance(v, str):
-            return UserRole(v)
+        """验证并转换角色值"""
+        if isinstance(v, UserRole):
+            v = v.value
+        if v == "super_admin":
+            return "superadmin"
         return v
 
     class Config:

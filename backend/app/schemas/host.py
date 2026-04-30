@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class HostResponse(HostBase):
 
 class HostDetailResponse(HostResponse):
     """主机详情响应"""
-    resolved_connection: Optional[dict] = None
+    resolved_connection: Optional["ResolvedConnectionConfig"] = None
     business_node: Optional["BusinessNodeSimple"] = None
     system_user: Optional["SystemUserSimple"] = None
     gateway: Optional["GatewaySimple"] = None
@@ -78,6 +78,43 @@ class HostDetailResponse(HostResponse):
 class HostMoveRequest(BaseModel):
     """移动主机请求"""
     target_business_node_id: int
+
+
+class ResolutionPathItem(BaseModel):
+    """解析路径项"""
+    level: str
+    field: str
+    value: Optional[str] = None
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class ResolvedConnectionConfig(BaseModel):
+    """解析后的连接配置"""
+    host_id: int
+    host_name: str
+    ip: Optional[str] = None
+    ssh_port: int
+    system_user_id: Optional[int] = None
+    system_user: Optional[object] = None
+    gateway_id: Optional[int] = None
+    gateway: Optional[object] = None
+    gateway_source: Optional[str] = None
+    resolution_path: List[ResolutionPathItem] = Field(default_factory=list)
+    resolved_config: Optional[dict] = None
+
+    class Config:
+        from_attributes = True
+
+
+class HostConnectionConfigResponse(BaseModel):
+    """主机连接配置响应"""
+    config: ResolvedConnectionConfig
+
+    class Config:
+        from_attributes = True
 
 
 # Rebuild models with forward references

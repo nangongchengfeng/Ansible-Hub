@@ -1,29 +1,36 @@
 import request from '@/utils/request'
-import { mockGetHosts, mockCreateHost, mockUpdateHost, mockDeleteHost, mockToggleHost } from '@/utils/mock'
 
-const useMock = true
+// 字段转换
+const transformFromBackend = (item) => ({
+  ...item,
+  businessNodeId: item.business_node_id,
+  createdAt: item.created_at,
+  updatedAt: item.updated_at
+})
 
-export const getHosts = (params) => {
-  if (useMock) return mockGetHosts(params)
-  return request.get('/hosts', { params })
+export const getHosts = async (params) => {
+  // TODO: 对接真实API
+  return { data: [], total: 0 }
 }
 
 export const createHost = (data) => {
-  if (useMock) return mockCreateHost(data)
-  return request.post('/hosts', data)
+  return request.post('/hosts', {
+    ...data,
+    business_node_id: data.businessNodeId
+  })
 }
 
 export const updateHost = (id, data) => {
-  if (useMock) return mockUpdateHost(id, data)
-  return request.put(`/hosts/${id}`, data)
+  return request.put(`/hosts/${id}`, {
+    ...data,
+    business_node_id: data.businessNodeId
+  })
 }
 
 export const deleteHost = (id) => {
-  if (useMock) return mockDeleteHost(id)
   return request.delete(`/hosts/${id}`)
 }
 
 export const toggleHost = (id) => {
-  if (useMock) return mockToggleHost(id)
   return request.patch(`/hosts/${id}/toggle`)
 }

@@ -26,7 +26,19 @@ const transformToBackend = (data) => ({
 })
 
 export const getHosts = async (params) => {
-  const res = await request.get('/hosts', { params })
+  // 转换前端参数名到后端
+  const backendParams = {}
+  if (params?.businessNodeId) {
+    backendParams.business_node_id = params.businessNodeId
+  }
+  if (params?.isEnabled !== undefined) {
+    backendParams.is_enabled = params.isEnabled
+  }
+  if (params?.search) {
+    backendParams.search = params.search
+  }
+
+  const res = await request.get('/hosts', { params: backendParams })
   return {
     ...res,
     data: res.data.map(transformFromBackend)
@@ -37,17 +49,28 @@ export const createHost = (data) => {
   return request.post('/hosts', transformToBackend(data))
 }
 
+export const getHost = async (id) => {
+  const res = await request.get(`/hosts/${id}`)
+  return {
+    ...res,
+    data: transformFromBackend(res.data)
+  }
+}
+
 export const updateHost = (id, data) => {
   return request.put(`/hosts/${id}`, transformToBackend(data))
 }
 
-export const deleteHost = (id) => {
-  return request.delete(`/hosts/${id}`)
+export const toggleHost = (id) => {
+  return request.patch(`/hosts/${id}/toggle`)
 }
 
-export const toggleHost = async (id) => {
-  const res = await request.get(`/hosts/${id}`)
-  const current = res.data
-  await request.put(`/hosts/${id}`, { is_enabled: !current.is_enabled })
-  return { data: { enabled: !current.is_enabled } }
+export const moveHost = (id, targetBusinessNodeId) => {
+  return request.post(`/hosts/${id}/move`, {
+    target_business_node_id: targetBusinessNodeId
+  })
+}
+
+export const deleteHost = (id) => {
+  return request.delete(`/hosts/${id}`)
 }

@@ -142,9 +142,10 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, FolderOpened } from '@element-plus/icons-vue'
-import { getHosts, createHost, updateHost, deleteHost, toggleHost } from '@/api/hosts'
-import { getBusinessNodes, getGateways } from '@/api/business-nodes'
-import { mockGetSystemUsers } from '@/utils/mock'
+import { getHosts, createHost, updateHost, deleteHost, toggleHost, moveHost } from '@/api/hosts'
+import { getBusinessNodes } from '@/api/business-nodes'
+import { getGateways } from '@/api/gateways'
+import { getSystemUsers } from '@/api/system-users'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -178,6 +179,19 @@ const formRules = {
   hostname: [{ required: true, message: '请输入主机地址', trigger: 'blur' }],
   businessNodeId: [{ required: true, message: '请选择业务节点', trigger: 'change' }],
   systemUserId: [{ required: true, message: '请选择系统用户', trigger: 'change' }]
+}
+
+const formatValidationError = (error) => {
+  if (error?.response?.data?.detail) {
+    if (Array.isArray(error.response.data.detail)) {
+      return error.response.data.detail.map(err => err.msg).join('\n')
+    }
+    return error.response.data.detail
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return '操作失败，请重试'
 }
 
 const treeProps = {
@@ -240,7 +254,7 @@ const fetchData = async () => {
     const res = await getHosts(params)
     hosts.value = res.data
   } catch (error) {
-    ElMessage.error('获取主机列表失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     loading.value = false
   }
@@ -251,7 +265,7 @@ const fetchTreeData = async () => {
     const res = await getBusinessNodes()
     treeData.value = res.data
   } catch (error) {
-    ElMessage.error('获取业务节点失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 
@@ -260,16 +274,16 @@ const fetchGateways = async () => {
     const res = await getGateways()
     gateways.value = res.data
   } catch (error) {
-    ElMessage.error('获取网关列表失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 
 const fetchSystemUsers = async () => {
   try {
-    const res = await mockGetSystemUsers()
+    const res = await getSystemUsers()
     systemUsers.value = res.data
   } catch (error) {
-    ElMessage.error('获取系统用户失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 
@@ -315,18 +329,21 @@ const handleDelete = async (row) => {
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
 
 const handleToggle = async (row) => {
   try {
-    await toggleHost(row.id)
+    const res = await toggleHost(row.id)
+    // 更新本地状态
+    row.enabled = res.data.is_enabled
     ElMessage.success(row.enabled ? '已启用' : '已禁用')
   } catch (error) {
+    // 回滚状态
     row.enabled = !row.enabled
-    ElMessage.error('操作失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 
@@ -348,7 +365,7 @@ const handleSubmit = async () => {
       dialogVisible.value = false
       await fetchData()
     } catch (error) {
-      ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+      ElMessage.error(formatValidationError(error))
     } finally {
       submitLoading.value = false
     }
@@ -369,12 +386,12 @@ const handleMoveSubmit = async () => {
 
   submitLoading.value = true
   try {
-    await updateHost(movingHost.value.id, { businessNodeId: moveTargetNodeId.value })
+    await moveHost(movingHost.value.id, moveTargetNodeId.value)
     ElMessage.success('移动成功')
     moveDialogVisible.value = false
     await fetchData()
   } catch (error) {
-    ElMessage.error('移动失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     submitLoading.value = false
   }

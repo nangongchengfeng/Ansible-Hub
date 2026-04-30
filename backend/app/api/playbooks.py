@@ -63,7 +63,26 @@ async def get_playbook(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="剧本不存在"
         )
-    return playbook
+
+    # 构建响应
+    return PlaybookDetailResponse(
+        id=playbook.id,
+        name=playbook.name,
+        description=playbook.description,
+        latest_version=playbook.latest_version,
+        current_content=playbook.current_content,
+        current_version=PlaybookVersionDetail(
+            id=playbook.versions[0].id,
+            version=playbook.versions[0].version,
+            content=playbook.versions[0].content,
+            change_description=playbook.versions[0].change_description,
+            created_by=playbook.versions[0].created_by,
+            created_at=playbook.versions[0].created_at
+        ) if playbook.versions else None,
+        created_by=playbook.created_by,
+        created_at=playbook.created_at,
+        updated_at=playbook.updated_at
+    )
 
 
 @router.put("/{playbook_id}", response_model=PlaybookResponse)
@@ -181,12 +200,12 @@ async def rollback_playbook(
         )
 
     try:
-        playbook, rolled_back_from, rolled_back_to = await PlaybookService.rollback(
+        playbook_obj, rolled_back_from, rolled_back_to = await PlaybookService.rollback(
             db=db, playbook=playbook, target_version=rollback_in.target_version, created_by=current_user.id
         )
         return {
-            "id": playbook.id,
-            "latest_version": playbook.latest_version.version if playbook.latest_version else 0,
+            "id": playbook_obj.id,
+            "latest_version": playbook_obj.latest_version if playbook_obj.latest_version else 0,
             "rolled_back_from": rolled_back_from,
             "rolled_back_to": rolled_back_to
         }

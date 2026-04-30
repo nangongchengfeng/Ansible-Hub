@@ -147,7 +147,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Document } from '@element-plus/icons-vue'
-import { getPlaybooks, createPlaybook, updatePlaybook, deletePlaybook, getPlaybookVersions, getPlaybookVersion, rollbackPlaybook } from '@/api/playbooks'
+import { getPlaybooks, createPlaybook, updatePlaybook, deletePlaybook, getPlaybookVersions, getPlaybookVersion, rollbackPlaybook, getPlaybook } from '@/api/playbooks'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -213,15 +213,21 @@ const handleCreate = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   isEdit.value = true
   editingId.value = row.id
   dialogTitle.value = '编辑剧本'
-  formData.name = row.name
-  formData.description = row.description
-  formData.content = row.content
-  formData.changeNote = ''
-  dialogVisible.value = true
+  try {
+    const res = await getPlaybook(row.id)
+    const data = res.data
+    formData.name = data.name
+    formData.description = data.description
+    formData.content = data.content
+    formData.changeNote = ''
+    dialogVisible.value = true
+  } catch (error) {
+    ElMessage.error('获取剧本详情失败')
+  }
 }
 
 const handleDelete = async (row) => {
@@ -282,7 +288,7 @@ const handleViewVersions = async (row) => {
 
 const handleViewVersion = async (row) => {
   try {
-    const res = await getPlaybookVersion(currentPlaybook.value.id, row.id)
+    const res = await getPlaybookVersion(currentPlaybook.value.id, row.version)
     currentVersion.value = res.data
     versionDetailVisible.value = true
   } catch (error) {
@@ -302,7 +308,7 @@ const handleRollback = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await rollbackPlaybook(currentPlaybook.value.id, row.id)
+    await rollbackPlaybook(currentPlaybook.value.id, { target_version: row.version })
     ElMessage.success('回滚成功')
     versionsDialogVisible.value = false
     await fetchData()

@@ -21,8 +21,13 @@ class Playbook(Base):
 
     @property
     def latest_version(self):
-        """获取最新版本"""
-        return self.versions[0] if self.versions else None
+        """获取最新版本号"""
+        return self.versions[0].version if self.versions else None
+
+    @property
+    def current_content(self):
+        """获取最新版本内容"""
+        return self.versions[0].content if self.versions else None
 
 
 class PlaybookVersion(Base):

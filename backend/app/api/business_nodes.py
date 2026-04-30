@@ -16,10 +16,8 @@ from app.services.business_node import BusinessNodeService
 router = APIRouter(prefix="/business-nodes", tags=["业务节点"])
 
 
-def _build_tree_item(node: BusinessNode, current_user: User) -> BusinessNodeTreeItem:
+def _build_tree_item(node: BusinessNode, node_map: dict, current_user: User) -> BusinessNodeTreeItem:
     """递归构建树状结构"""
-    # 超级管理员有所有权限
-    is_superadmin = current_user.role in ("super_admin", "superadmin")
     item = BusinessNodeTreeItem(
         id=node.id,
         name=node.name,
@@ -32,8 +30,12 @@ def _build_tree_item(node: BusinessNode, current_user: User) -> BusinessNodeTree
         updated_at=node.updated_at,
         children=[],
     )
-    for child in node.children:
-        item.children.append(_build_tree_item(child, current_user))
+    # 从node_map中查找子节点
+    for child_id, child_node in node_map.items():
+        if child_node.parent_id == node.id:
+            item.children.append(_build_tree_item(child_node, node_map, current_user))
+    # 排序子节点
+    item.children.sort(key=lambda x: (x.sort_order, x.id))
     return item
 
 
@@ -43,9 +45,17 @@ async def get_business_nodes_tree(
     db: AsyncSession = Depends(get_db),
 ):
     """获取业务节点树状结构"""
-    # 简化：先返回所有节点
-    nodes = await BusinessNodeService.get_tree(db)
-    return [_build_tree_item(node, current_user) for node in nodes]
+    all_nodes = await BusinessNodeService.get_tree(db)
+
+    # 构建节点映射
+    node_map = {node.id: node for node in all_nodes}
+
+    # 找出根节点
+    root_nodes = [node for node in all_nodes if node.parent_id is None]
+    root_nodes.sort(key=lambda x: (x.sort_order, x.id))
+
+    # 构建树结构
+    return [_build_tree_item(node, node_map, current_user) for node in root_nodes]
 
 
 @router.get("", response_model=List[BusinessNodeResponse])

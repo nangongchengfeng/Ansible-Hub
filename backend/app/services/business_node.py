@@ -49,27 +49,11 @@ class BusinessNodeService:
 
     @staticmethod
     async def get_tree(db: AsyncSession) -> List[BusinessNode]:
-        """获取完整业务节点树（返回根节点，包含子节点）"""
-        # 查询所有根节点
-        query = select(BusinessNode).where(BusinessNode.parent_id.is_(None)).order_by(BusinessNode.sort_order, BusinessNode.id)
-        result = await db.execute(query)
-        root_nodes = list(result.scalars().all())
-
-        # 递归加载所有子节点（使用eager loading提高性能）
-        for node in root_nodes:
-            await BusinessNodeService._load_children_recursive(db, node)
-
-        return root_nodes
-
-    @staticmethod
-    async def _load_children_recursive(db: AsyncSession, node: BusinessNode):
-        """递归加载子节点"""
-        query = select(BusinessNode).where(BusinessNode.parent_id == node.id).order_by(BusinessNode.sort_order, BusinessNode.id)
-        result = await db.execute(query)
-        children = list(result.scalars().all())
-        node.children = children
-        for child in children:
-            await BusinessNodeService._load_children_recursive(db, child)
+        """获取所有业务节点（平铺，用于在API层构建树）"""
+        # 查询所有节点
+        all_query = select(BusinessNode).order_by(BusinessNode.sort_order, BusinessNode.id)
+        all_result = await db.execute(all_query)
+        return list(all_result.scalars().all())
 
     @staticmethod
     async def create(

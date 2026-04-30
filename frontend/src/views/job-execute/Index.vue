@@ -45,7 +45,7 @@
             />
             <el-alert
               v-if="checkResult"
-              :type="checkResult.blocked ? 'error' : 'success'"
+              :type="checkResult.blocked ? 'error' : (checkResult.severity === 'warn' ? 'warning' : 'success')"
               :closable="false"
               style="margin-top: 10px"
             >
@@ -115,7 +115,7 @@
     </el-card>
 
     <!-- 执行结果 -->
-    <el-card style="margin-top: 20px" v-if="isRunning || jobStatus">
+    <el-card style="margin-top: 20px" v-if="isRunning || jobStatus || logs.length > 0">
       <template #header>
         <div class="card-header">
           <span>执行结果</span>
@@ -126,10 +126,12 @@
       <div class="log-output" ref="logOutput">
         <div v-for="(log, index) in logs" :key="index" class="log-line">
           <span class="log-time">[{{ log.time }}]</span>
+          <span :class="`log-level log-${log.level}`">[{{ log.level.toUpperCase() }}]</span>
           <span class="log-text">{{ log.text }}</span>
         </div>
         <div v-if="isRunning" class="log-line">
           <span class="log-time">[{{ currentTime }}]</span>
+          <span class="log-level log-info">[INFO]</span>
           <span class="log-text">执行中...</span>
           <span class="log-dots"></span>
         </div>
@@ -155,19 +157,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { VideoPlay, Close, Document } from '@element-plus/icons-vue'
-import { getHostList, getScriptList, getPlaybookList, executeJob, cancelJob, checkCommand, saveAsTemplate } from '@/api/jobExecute'
+import { getHostList, getScriptList, getPlaybookList, executeJob, checkCommand, saveAsTemplate } from '@/api/jobExecute'
 import { getBusinessNodes } from '@/api/business-nodes'
+import { getJobDetail, getJobTasks } from '@/api/jobExecutions'
 
 const loading = ref(false)
 const isRunning = ref(false)
 const jobStatus = ref('')
-const jobId = ref('')
+const jobId = ref(null)
 const logs = ref([])
 const checkResult = ref(null)
 const saveDialogVisible = ref(false)
+let pollingTimer = null
 
 const formData = reactive({
   executeType: 'shell',
@@ -224,29 +228,33 @@ const canExecute = computed(() => {
 })
 
 const statusType = computed(() => {
-  if (jobStatus.value === 'success') return 'success'
+  if (jobStatus.value === 'success' || jobStatus.value === 'completed') return 'success'
   if (jobStatus.value === 'failed') return 'danger'
   if (jobStatus.value === 'cancelled') return 'warning'
+  if (jobStatus.value === 'running') return 'primary'
   return 'info'
 })
 
 const statusText = computed(() => {
   const map = {
-    success: '执行成功',
-    failed: '执行失败',
-    cancelled: '已取消',
-    running: '执行中'
+    pending: '等待中',
+    running: '运行中',
+    completed: '已完成',
+    success: '成功',
+    failed: '失败',
+    cancelled: '已取消'
   }
-  return map[jobStatus.value] || ''
+  return map[jobStatus.value] || jobStatus.value || ''
 })
 
 const currentTime = computed(() => {
   return new Date().toLocaleTimeString('zh-CN')
 })
 
-const addLog = (text) => {
+const addLog = (text, level = 'info') => {
   logs.value.push({
     time: new Date().toLocaleTimeString('zh-CN'),
+    level,
     text
   })
   nextTick(() => {
@@ -294,49 +302,81 @@ const handleCommandCheck = async () => {
   }
 }
 
+// 轮询作业状态
+const pollJobStatus = async () => {
+  if (!jobId.value) return
+
+  try {
+    const [jobRes, tasksRes] = await Promise.all([
+      getJobDetail(jobId.value),
+      getJobTasks(jobId.value)
+    ])
+
+    const job = jobRes.data
+    const tasks = tasksRes.data
+
+    // 更新作业状态
+    const newStatus = job.status?.toLowerCase() || 'pending'
+    jobStatus.value = newStatus
+
+    // 添加任务状态更新日志
+    tasks.forEach(task => {
+      const taskStatus = task.status?.toLowerCase()
+      if (taskStatus === 'completed' || taskStatus === 'failed') {
+        const level = taskStatus === 'completed' ? 'success' : 'error'
+        addLog(`主机 ${task.hostId} 执行完成: ${taskStatus}`, level)
+        if (task.stdout) {
+          addLog(`主机 ${task.hostId} 输出: ${task.stdout}`, 'info')
+        }
+        if (task.stderr) {
+          addLog(`主机 ${task.hostId} 错误: ${task.stderr}`, 'error')
+        }
+      }
+    })
+
+    // 检查是否完成
+    if (['completed', 'success', 'failed', 'cancelled'].includes(newStatus)) {
+      isRunning.value = false
+      if (pollingTimer) {
+        clearInterval(pollingTimer)
+        pollingTimer = null
+      }
+      addLog(`作业执行完成，最终状态: ${newStatus}`, newStatus === 'failed' ? 'error' : 'success')
+    }
+  } catch (error) {
+    console.error('轮询作业状态失败:', error)
+  }
+}
+
 const handleExecute = async () => {
   logs.value = []
   isRunning.value = true
-  jobStatus.value = ''
+  jobStatus.value = 'pending'
 
-  addLog('开始执行作业...')
+  addLog('开始执行作业...', 'info')
 
   try {
     const res = await executeJob(formData)
     jobId.value = res.data.jobId
-    addLog(`作业已启动，作业ID: ${jobId.value}`)
+    addLog(`作业已提交，作业ID: ${jobId.value}`, 'info')
 
-    await simulateExecution()
+    if (!res.data.commandCheckPassed) {
+      addLog(`命令检查未通过: ${res.data.message}`, 'error')
+      isRunning.value = false
+      jobStatus.value = 'failed'
+      return
+    }
+
+    addLog('等待作业执行...', 'info')
+
+    // 开始轮询
+    pollingTimer = setInterval(pollJobStatus, 2000)
+    // 立即执行一次
+    await pollJobStatus()
   } catch (error) {
-    jobStatus.value = 'failed'
-    addLog('执行失败: ' + error.message)
-  } finally {
     isRunning.value = false
-  }
-}
-
-const simulateExecution = async () => {
-  const fakeLogs = [
-    '连接主机...',
-    '主机连接成功',
-    '上传执行文件...',
-    '开始执行...',
-    '执行进度: 25%',
-    '执行进度: 50%',
-    '执行进度: 75%',
-    '执行进度: 100%',
-    '收集执行结果...'
-  ]
-
-  for (let i = 0; i < fakeLogs.length; i++) {
-    if (!isRunning.value) break
-    await new Promise(resolve => setTimeout(resolve, 500))
-    addLog(fakeLogs[i])
-  }
-
-  if (isRunning.value) {
-    jobStatus.value = 'success'
-    addLog('作业执行完成！')
+    jobStatus.value = 'failed'
+    addLog(`执行失败: ${error.message || error.response?.data?.detail || '未知错误'}`, 'error')
   }
 }
 
@@ -347,10 +387,14 @@ const handleCancel = async () => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await cancelJob(jobId.value)
+    // 后端暂未实现取消API，直接停止轮询
     isRunning.value = false
     jobStatus.value = 'cancelled'
-    addLog('作业已取消')
+    if (pollingTimer) {
+      clearInterval(pollingTimer)
+      pollingTimer = null
+    }
+    addLog('作业已取消', 'warning')
     ElMessage.success('作业已取消')
   } catch (error) {
     if (error !== 'cancel') {
@@ -385,6 +429,12 @@ const handleConfirmSaveTemplate = async () => {
 
 onMounted(() => {
   fetchData()
+})
+
+onUnmounted(() => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+  }
 })
 </script>
 
@@ -423,6 +473,27 @@ onMounted(() => {
 .log-time {
   color: #6a9955;
   margin-right: 8px;
+}
+
+.log-level {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+.log-info {
+  color: #569cd6;
+}
+
+.log-success {
+  color: #6a9955;
+}
+
+.log-warning {
+  color: #dcdcaa;
+}
+
+.log-error {
+  color: #f44747;
 }
 
 .log-dots::after {

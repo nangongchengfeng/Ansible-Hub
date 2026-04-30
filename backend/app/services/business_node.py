@@ -48,12 +48,11 @@ class BusinessNodeService:
         return total, nodes
 
     @staticmethod
-    async def get_tree(db: AsyncSession) -> List[BusinessNode]:
-        """获取所有业务节点（平铺，用于在API层构建树）"""
-        # 查询所有节点
-        all_query = select(BusinessNode).order_by(BusinessNode.sort_order, BusinessNode.id)
-        all_result = await db.execute(all_query)
-        return list(all_result.scalars().all())
+    async def get_all_nodes(db: AsyncSession) -> List[BusinessNode]:
+        """获取所有业务节点"""
+        query = select(BusinessNode).order_by(BusinessNode.sort_order, BusinessNode.id)
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     @staticmethod
     async def create(

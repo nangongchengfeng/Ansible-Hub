@@ -7,16 +7,6 @@ const transformUserFromBackend = (user) => ({
   createdAt: user.created_at
 })
 
-// 字段转换：前端 -> 后端
-const transformUserToBackend = (data) => ({
-  username: data.username,
-  email: data.email,
-  real_name: data.name,
-  role: data.role,
-  password: data.password,
-  is_active: true
-})
-
 export const getUsers = async () => {
   const res = await request.get('/users')
   return {
@@ -26,12 +16,18 @@ export const getUsers = async () => {
 }
 
 export const createUser = (data) => {
-  return request.post('/users', transformUserToBackend(data))
+  return request.post('/users', {
+    username: data.username,
+    email: data.email,
+    name: data.name,
+    role: data.role,
+    password: data.password
+  })
 }
 
 export const updateUser = (id, data) => {
   return request.put(`/users/${id}`, {
-    real_name: data.name,
+    name: data.name,
     email: data.email,
     role: data.role
   })

@@ -182,12 +182,12 @@ async def rollback_script(
         )
 
     try:
-        script, rolled_back_from, rolled_back_to = await ScriptService.rollback(
+        script_obj, rolled_back_from, rolled_back_to = await ScriptService.rollback(
             db=db, script=script, target_version=rollback_in.target_version, created_by=current_user.id
         )
         return {
-            "id": script.id,
-            "latest_version": script.latest_version.version if script.latest_version else 0,
+            "id": script_obj.id,
+            "latest_version": script_obj.latest_version if script_obj.latest_version else 0,
             "rolled_back_from": rolled_back_from,
             "rolled_back_to": rolled_back_to
         }

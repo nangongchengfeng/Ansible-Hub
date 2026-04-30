@@ -52,7 +52,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdBy" label="创建者ID" width="100" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleViewDetail(row)">
               <el-icon><Document /></el-icon>
@@ -61,6 +61,10 @@
             <el-button link type="primary" size="small" @click="handleViewLogs(row)">
               <el-icon><List /></el-icon>
               日志
+            </el-button>
+            <el-button link type="warning" size="small" @click="handleRetry(row)" v-if="['completed', 'success', 'failed', 'cancelled'].includes(row.status?.toLowerCase())">
+              <el-icon><Refresh /></el-icon>
+              重试
             </el-button>
           </template>
         </el-table-column>
@@ -166,9 +170,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Document, List } from '@element-plus/icons-vue'
-import { getJobList, getJobDetail, getJobTasks } from '@/api/jobExecutions'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Document, List, Refresh } from '@element-plus/icons-vue'
+import { getJobList, getJobDetail, getJobTasks, retryJob } from '@/api/jobExecutions'
 import { useAuthStore } from '@/stores/auth'
 
 const loading = ref(false)
@@ -296,6 +300,27 @@ const handleViewLogs = async (row) => {
     logsDialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取执行日志失败')
+  }
+}
+
+const handleRetry = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要重新执行作业 #${row.id} 吗？`,
+      '确认重试',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    const res = await retryJob(row.id)
+    ElMessage.success('作业已重新提交')
+    fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '重试失败')
+    }
   }
 }
 

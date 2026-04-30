@@ -9,6 +9,8 @@ from .playbook import PlaybookService
 from .command_filter_rule import CommandFilterRuleService
 from .ssh import SSHService
 from .audit_log import AuditLogService, audit_log
+from .job_execution import JobExecutionService
+from .job_template import JobTemplateService
 
-__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService", "CommandFilterRuleService", "SSHService", "AuditLogService", "audit_log"]
+__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService", "CommandFilterRuleService", "SSHService", "AuditLogService", "audit_log", "JobExecutionService", "JobTemplateService"]
 

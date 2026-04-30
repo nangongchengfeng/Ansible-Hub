@@ -15,13 +15,6 @@ request.interceptors.request.use(
     if (authStore.token) {
       config.headers.Authorization = `Bearer ${authStore.token}`
     }
-    // 给 GET 请求加时间戳防缓存
-    if (config.method?.toUpperCase() === 'GET') {
-      config.params = {
-        ...config.params,
-        _t: Date.now()
-      }
-    }
     return config
   },
   (error) => {

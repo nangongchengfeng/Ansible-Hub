@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,9 +16,29 @@ from app.api import (
     command_filter_rules_router,
     audit_logs_router,
     job_executions_router,
+    job_templates_router,
 )
 
-app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时启动事件监听器
+    import asyncio
+    from app.core.job_events import listen_to_job_events
+    task = asyncio.create_task(listen_to_job_events())
+
+    yield
+
+    # 停止时清理
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 
 # CORS配置
 app.add_middleware(
@@ -61,6 +82,7 @@ app.include_router(playbooks_router, prefix="/api")
 app.include_router(command_filter_rules_router, prefix="/api")
 app.include_router(audit_logs_router, prefix="/api")
 app.include_router(job_executions_router, prefix="/api")
+app.include_router(job_templates_router, prefix="/api")
 
 
 @app.get("/health")

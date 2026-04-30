@@ -88,7 +88,7 @@
         </div>
       </el-header>
       <el-main class="layout-main">
-        <router-view :key="$route.path" />
+        <router-view />
       </el-main>
     </el-container>
   </el-container>

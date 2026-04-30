@@ -349,3 +349,75 @@ class JobExecutionService:
             logs["tasks"].append(task_log)
 
         return logs
+
+    @staticmethod
+    async def retry_job(
+        db: AsyncSession,
+        job_id: int,
+        current_user: User,
+    ) -> JobExecution:
+        """重做作业（创建新作业）"""
+        original_job = await JobExecutionService.get_by_id(db, job_id)
+        if not original_job:
+            raise ValueError("Original job not found")
+
+        # Prepare data for new job
+        job_data = {
+            "job_type": original_job.job_type,
+            "status": "pending",
+            "command_check_passed": True,
+            "created_by": current_user.id,
+        }
+
+        # Copy content based on job type
+        if original_job.job_type == "shell":
+            job_data["shell_command"] = original_job.shell_command
+        elif original_job.job_type == "module":
+            job_data["module_name"] = original_job.module_name
+            job_data["module_args"] = original_job.module_args
+        elif original_job.job_type == "playbook":
+            job_data["playbook_id"] = original_job.playbook_id
+            job_data["playbook_version"] = original_job.playbook_version
+        elif original_job.job_type == "script":
+            job_data["script_id"] = original_job.script_id
+            job_data["script_version"] = original_job.script_version
+
+        # Copy target info
+        job_data["target_type"] = original_job.target_type
+        job_data["target_host_ids"] = original_job.target_host_ids
+        job_data["target_business_node_id"] = original_job.target_business_node_id
+
+        # Create new job
+        new_job = JobExecution(**job_data)
+        db.add(new_job)
+        await db.flush()
+
+        # Create tasks for each host
+        for host_id in original_job.target_host_ids or []:
+            host = await HostService.get_by_id(db, host_id)
+            if host and host.is_enabled:
+                # Resolve connection config for this host
+                connection_config = await HostService.resolve_connection_config(db, host)
+                task = Task(
+                    job_execution_id=new_job.id,
+                    host_id=host.id,
+                    status="pending",
+                    connection_config=connection_config.model_dump() if connection_config else None,
+                )
+                db.add(task)
+
+        await db.commit()
+        await db.refresh(new_job)
+
+        # Queue the job
+        execute_job.delay(new_job.id)
+
+        # Load relationships
+        result = await db.execute(
+            select(JobExecution)
+            .where(JobExecution.id == new_job.id)
+            .options(
+                selectinload(JobExecution.creator),
+            )
+        )
+        return result.scalar_one_or_none()

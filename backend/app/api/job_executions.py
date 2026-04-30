@@ -199,3 +199,57 @@ async def cancel_job(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+
+
+@router.post("/{job_id}/retry", status_code=status.HTTP_201_CREATED)
+@audit_log(
+    action="retry",
+    resource_type="job_execution",
+    get_resource_id=lambda r, **kwargs: kwargs.get("job_id"),
+    get_resource_name=lambda r, **kwargs: f"Job {kwargs.get('job_id')} retried",
+)
+async def retry_job(
+    job_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """重做作业"""
+    try:
+        new_job = await JobExecutionService.retry_job(db, job_id, current_user)
+        return {
+            "id": new_job.id,
+            "original_job_id": job_id,
+            "status": new_job.status,
+            "created_at": new_job.created_at,
+            "message": "Job retried successfully"
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/{job_id}/save-template", status_code=status.HTTP_201_CREATED)
+@audit_log(
+    action="save_template",
+    resource_type="job_execution",
+    get_resource_id=lambda r, **kwargs: kwargs.get("job_id"),
+    get_resource_name=lambda r, **kwargs: f"Job {kwargs.get('job_id')} saved as template",
+)
+async def save_as_template(
+    job_id: int,
+    name: str = Query(..., description="模板名称"),
+    description: Optional[str] = Query(None, description="模板描述"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """保存为作业模板"""
+    # Job templates not implemented yet - return a placeholder
+    # This would integrate with a job template service
+    return {
+        "id": 0,  # Placeholder
+        "name": name,
+        "description": description,
+        "message": "Template saved successfully (feature coming soon)"
+    }

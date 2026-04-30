@@ -1,348 +1,175 @@
-1. ## 技术栈
+1. <design-system>
 
-   ```
-   Vue 3 + Vite 5 + TypeScript + Vue Router 4 + Pinia + Element Plus + UnoCSS + SCSS + Axios + ECharts 5
-   ```
+   # Design Style: Minimalist Modern
 
+   **Core DNA:** Restraint in quantity, confidence in execution. Clean structure with electric blue accents (`#0052FF`), dual-font system (Calistoga display + Inter body), and purposeful whitespace.
    ---
 
-   ## 一、设计理念
-
-   ### 核心定位
-
-   **反传统后台**：以有机曲线承载数据，以柔和渐变传递状态，以形变动效暗示生命力
-
-   ### 视觉原则
-
-   - ✅ 多值不对称圆角、曲线 clip-path、平滑渐变
-   - ✅ 微妙视觉偏移，避免严格对称
-   - ✅ 6-10s 缓慢形态形变，如有机物呼吸
-   - ✅ 文字/表格区域保持矩形，确保可读性
-   - ❌ 禁止直角、硬阴影、弹性动效、纯白背景
-
-   ---
-
-   ## 二、颜色系统
+   ## Tokens (CSS Variables)
 
    ```css
-   :root {
-     /* 背景 */
-     --bg-base: #f5f3f7;
-     --bg-surface: #faf8fc;
-     --bg-elevated: #ffffff;
-   
-     /* 主色调 - 粉紫渐变 */
-     --color-primary: #9b7fe8;
-     --color-primary-light: #c4aeef;
-     --color-primary-dark: #7158c1;
-   
-     /* 辅助色 */
-     --color-teal: #7ecec4;
-     --color-rose: #e8a4b8;
-     --color-sand: #d4c5a9;
-     --color-sky: #a8cfe0;
-   
-     /* 状态色 */
-     --color-success: #8ecba8;
-     --color-warning: #e8cc8a;
-     --color-error: #e8968c;
-     --color-info: #8ab4e8;
-   
-     /* 文字 */
-     --text-primary: #2d2640;
-     --text-secondary: #6b5f80;
-     --text-muted: #a398b8;
-   
-     /* 渐变 */
-     --gradient-primary: linear-gradient(135deg, #9b7fe8 0%, #c4aeef 60%, #e8a4b8 100%);
-     --gradient-teal: linear-gradient(135deg, #7ecec4 0%, #a8cfe0 100%);
-     --gradient-warm: linear-gradient(135deg, #e8a4b8 0%, #e8cc8a 100%);
-     --gradient-surface: linear-gradient(160deg, #faf8fc 0%, #f0edf8 100%);
-   
-     /* 阴影 */
-     --shadow-sm: 0 2px 12px rgba(155, 127, 232, 0.08);
-     --shadow-md: 0 6px 28px rgba(155, 127, 232, 0.13);
-     --shadow-lg: 0 16px 48px rgba(155, 127, 232, 0.18);
-     --shadow-blob: 0 20px 60px rgba(155, 127, 232, 0.22);
-   
-     /* 圆角 */
-     --radius-organic-sm: 18px 12px 16px 10px;
-     --radius-organic-md: 32px 18px 28px 22px;
-     --radius-organic-lg: 48px 28px 42px 32px;
-     --radius-pill: 50px 28px 44px 30px;
-     --radius-blob: 62% 38% 54% 46% / 48% 52% 48% 52%;
-   
-     /* 动效 */
-     --duration-morph: 8s;
-     --duration-hover: 0.4s;
-     --duration-active: 0.2s;
-     --duration-enter: 0.6s;
-     --easing-organic: cubic-bezier(0.34, 0.8, 0.56, 1.02);
-     --easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-   }
+   --background: #FAFAFA;
+   --foreground: #0F172A;    /* Also used for inverted sections */
+   --muted: #F1F5F9;
+   --muted-foreground: #64748B;
+   --accent: #0052FF;
+   --accent-secondary: #4D7CFF;
+   --border: #E2E8F0;
+   --card: #FFFFFF;
    ```
 
+   **Gradient:** `linear-gradient(135deg, #0052FF, #4D7CFF)` — used for buttons, icon backgrounds, borders, text highlights.
    ---
 
-   ## 三、排版系统
+   ## Typography
 
-   ```css
-   /* 字体栈 */
-   --font-display: 'Sora', 'PingFang SC', sans-serif;
-   --font-body: 'DM Sans', 'PingFang SC', sans-serif;
-   --font-mono: 'JetBrains Mono', monospace;
-   
-   /* 字号 */
-   --text-xs: 11px;
-   --text-sm: 13px;
-   --text-base: 15px;
-   --text-lg: 18px;
-   --text-xl: 22px;
-   --text-2xl: 28px;
-   --text-3xl: 36px;
-   ```
+   | Element        | Font           | Size                                     | Weight | Tracking  | Class                      |
+   | -------------- | -------------- | ---------------------------------------- | ------ | --------- | -------------------------- |
+   | **Hero H1**    | Calistoga      | `text-5xl md:text-6xl lg:text-[5.25rem]` | normal | `-0.02em` | `font-serif`               |
+   | **Section H2** | Calistoga      | `text-3xl md:text-[3.25rem]`             | normal | normal    | `font-serif`               |
+   | **H3 Card**    | Inter          | `text-lg xl:text-2xl`                    | 600    | `-0.01em` | `font-sans`                |
+   | **Body**       | Inter          | `text-base lg:text-lg`                   | 400    | normal    | `leading-7 text-slate-600` |
+   | **Label**      | JetBrains Mono | `text-xs`                                | 400    | `0.15em`  | `uppercase font-mono`      |
 
-   - 标题/KPI数字：`font-display`，字重 700-800
-   - 正文/表格：`font-body`，字重 400-500
-
+   **Gradient Text:** `bg-gradient-to-r from-[#0052FF] to-[#4D7CFF] bg-clip-text text-transparent`
    ---
 
-   ## 四、动效规范
+   ## Components
 
-   ### Blob 形变（核心）
+   ### Button Primary
 
-   ```css
-   @keyframes morphBlob {
-     0% { border-radius: 62% 38% 54% 46% / 48% 52% 48% 52%; }
-     25% { border-radius: 42% 58% 38% 62% / 55% 45% 58% 42%; }
-     50% { border-radius: 54% 46% 66% 34% / 42% 58% 44% 56%; }
-     75% { border-radius: 38% 62% 48% 52% / 60% 40% 52% 48%; }
-     100% { border-radius: 58% 42% 40% 60% / 46% 54% 50% 50%; }
-   }
+   ```jsx
+   <button className="h-12 md:h-14 px-6 md:px-8 rounded-xl bg-gradient-to-r from-[#0052FF] to-[#4D7CFF] text-white font-medium shadow-sm hover:shadow-[0_8px_24px_rgba(0,82,255,0.35)] hover:-translate-y-0.5 hover:brightness-110 active:scale-[0.98] transition-all duration-200">
+     Button Text
+   </button>
    ```
 
-   - 时长：6-10s，ease-in-out，infinite alternate
-   - 不同 blob 使用不同时长，避免同步
+   ### Button Secondary
 
-   ### 页面入场
-
-   ```css
-   @keyframes fadeSlideUp {
-     from { opacity: 0; transform: translateY(20px); }
-     to { opacity: 1; transform: translateY(0); }
-   }
+   ```jsx
+   <button className="h-12 md:h-14 px-6 rounded-xl border border-slate-200 bg-transparent text-slate-900 font-medium hover:bg-slate-50 hover:border-[#0052FF]/30 transition-all duration-200">
+     Secondary
+   </button>
    ```
 
-   - 卡片列表错开入场，延迟 0.1s 递增
+   ### Card Standard
 
-   ---
+   ```jsx
+   <div className="rounded-2xl bg-white border border-slate-200 p-6 md:p-8 shadow-md hover:shadow-xl hover:shadow-[0_20px_25px_rgba(0,82,255,0.08)] transition-all duration-300 group">
+     {/* Content */}
+   </div>
+   ```
 
-   ## 五、组件规范
+   ### Card Featured (Gradient Border)
 
-   ### 5.1 卡片 (OrgCard)
-
-   ```vue
-   <template>
-     <div class="org-card">
-       <slot />
+   ```jsx
+   <div className="rounded-2xl p-[2px] bg-gradient-to-br from-[#0052FF] via-[#4D7CFF] to-[#0052FF]">
+     <div className="h-full w-full rounded-[calc(1rem-2px)] bg-white p-6">
+       {/* Content */}
      </div>
-   </template>
-   
-   <style scoped>
-   .org-card {
-     background: var(--gradient-surface);
-     border-radius: var(--radius-organic-md);
-     box-shadow: var(--shadow-md);
-     padding: 24px 28px;
-     border: 1px solid rgba(155, 127, 232, 0.1);
-     transition: all var(--duration-hover) var(--easing-organic);
-     position: relative;
-     overflow: hidden;
-   }
-   
-   .org-card:nth-child(2n) { border-radius: 28px 38px 22px 32px; }
-   .org-card:nth-child(3n) { border-radius: 36px 22px 38px 18px; }
-   
-   .org-card::before {
-     content: '';
-     position: absolute;
-     width: 180px;
-     height: 180px;
-     top: -60px;
-     right: -50px;
-     background: var(--gradient-primary);
-     opacity: 0.06;
-     border-radius: var(--radius-blob);
-     animation: morphBlob var(--duration-morph) ease-in-out infinite alternate;
-     pointer-events: none;
-   }
-   
-   .org-card:hover {
-     transform: translateY(-3px) scale(1.008);
-     box-shadow: var(--shadow-lg);
-   }
-   </style>
+   </div>
    ```
 
-   ### 5.2 按钮
+   ### Section Label (Badge)
+
+   ```jsx
+   <div className="inline-flex items-center gap-3 rounded-full border border-[#0052FF]/30 bg-[#0052FF]/5 px-5 py-2">
+     <span className="h-2 w-2 rounded-full bg-[#0052FF] animate-pulse" />
+     <span className="font-mono text-xs uppercase tracking-[0.15em] text-[#0052FF]">
+       Section Name
+     </span>
+   </div>
+   ```
+
+   ### Input
+
+   ```jsx
+   <input className="h-12 md:h-14 w-full rounded-xl border border-slate-200 bg-transparent px-4 text-slate-900 placeholder:text-slate-400 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF] focus:ring-offset-2 transition-all" />
+   ```
+
+   ---
+
+   ## Layout Principles
+
+   **Container:** `max-w-6xl mx-auto px-4 sm:px-6 lg:px-8`
+   **Section Spacing:** `py-28 md:py-36 lg:py-44`
+   **Grid Patterns:**
+
+   ```jsx
+   // Hero: Asymmetric text-heavy
+   <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12">
+   // Features: Standard 3-col with optional span
+   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+   // Benefits: Content-first asymmetric
+   <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-16">
+   ```
+
+   **Inverted Sections:** Use `bg-slate-900 text-white` for contrast. Add dot texture:
+
+   ```jsx
+   <div className="relative bg-slate-900 text-white">
+     <div className="absolute inset-0 opacity-[0.03]" 
+          style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px'}} />
+     {/* Content */}
+   </div>
+   ```
+
+   ---
+
+   ## Animation Guidelines
+
+   **Entrance (Framer Motion):**
+
+   ```jsx
+   const easeOut = [0.16, 1, 0.3, 1];
+   const fadeInUp = {
+     hidden: { opacity: 0, y: 28 },
+     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: easeOut } }
+   };
+   // Usage with viewport trigger
+   <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15, margin: "-60px" }} variants={fadeInUp}>
+   ```
+
+   **Continuous Animations:**
 
    ```css
-   .btn-primary {
-     background: var(--gradient-primary);
-     border-radius: var(--radius-pill);
-     border: none;
-     padding: 10px 28px;
-     color: white;
-     font-weight: 600;
-     box-shadow: 0 4px 16px rgba(155, 127, 232, 0.35);
-     transition: all var(--duration-hover) var(--easing-organic);
+   /* Floating cards */
+   @keyframes float {
+     0%, 100% { transform: translateY(0); }
+     50% { transform: translateY(-10px); }
    }
-   .btn-primary:hover { transform: translateY(-2px) scale(1.03); }
-   .btn-primary:active { transform: translateY(0) scale(0.98); }
-   ```
-
-   ### 5.3 数据表格
-
-   > 表格内容保持矩形，仅容器使用有机圆角
-
-   ```css
-   .table-container {
-     border-radius: var(--radius-organic-md);
-     overflow: hidden;
-     box-shadow: var(--shadow-sm);
-     background: var(--bg-surface);
-   }
-   
-   thead tr {
-     background: linear-gradient(90deg, rgba(155,127,232,0.08), rgba(126,206,196,0.08));
-   }
-   
-   tbody tr:hover { background: rgba(155,127,232,0.04); }
-   ```
-
-   ### 5.4 侧边栏
-
-   ```css
-   .sidebar {
-     width: 240px;
-     background: linear-gradient(180deg, #2d2640 0%, #1e1a30 100%);
-     clip-path: path('M 0 0 L 220 0 Q 240 20 240 40 L 240 calc(100% - 40px) Q 240 100% 220 100% L 0 100% Z');
+   .animate-float { animation: float 5s ease-in-out infinite; }
+   /* Slow rotating ring */
+   .animate-spin-slow { animation: spin 60s linear infinite; }
+   /* Pulsing dot */
+   .animate-pulse-subtle { 
+     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
    }
    ```
 
-   ---
+   **Hover Patterns:**
 
-   ## 六、全局装饰 Blob
+   - Buttons: `-translate-y-0.5` + shadow increase
+   - Cards: `shadow-xl` + optional gradient overlay
+   - Icons: `scale-110` or `group-hover:translate-x-1` for arrows
+     **Accessibility:** Respect `prefers-reduced-motion` — disable continuous animations for users who prefer reduced motion.
 
-   在 `AppLayout` 中引入 `GlobalBlobs` 组件：
+2. 
 
-   ```vue
-   <template>
-     <div class="global-blobs" aria-hidden="true">
-       <div class="blob blob-1" />
-       <div class="blob blob-2" />
-       <div class="blob blob-3" />
-     </div>
-   </template>
-   
-   <style scoped>
-   .global-blobs {
-     position: fixed;
-     inset: 0;
-     pointer-events: none;
-     z-index: 0;
-     overflow: hidden;
-   }
-   
-   .blob {
-     position: absolute;
-     border-radius: var(--radius-blob);
-     animation: morphBlob var(--duration-morph) ease-in-out infinite alternate;
-     filter: blur(60px);
-     opacity: 0.5;
-   }
-   
-   .blob-1 {
-     width: 520px; height: 520px;
-     top: -200px; right: -100px;
-     background: radial-gradient(circle, rgba(155,127,232,0.18), transparent 70%);
-     animation-duration: 9s;
-   }
-   
-   .blob-2 {
-     width: 380px; height: 380px;
-     bottom: 10%; left: -80px;
-     background: radial-gradient(circle, rgba(126,206,196,0.15), transparent 70%);
-     animation-duration: 7s;
-     animation-delay: -3s;
-   }
-   </style>
-   ```
+   |      |      |
+   | ---- | ---- |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |
 
-   ---
-
-   ## 七、布局规范
-
-   ### 整体结构
-
-   ```
-   AppLayout
-   ├── Sidebar (240px，有机曲线右侧)
-   └── MainArea
-       ├── TopBar (搜索、头像、通知)
-       └── PageContent (padding: 24px 28px)
-   ```
-
-   ### 网格系统
-
-   ```css
-   .content-grid {
-     display: grid;
-     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-     gap: 20px;
-   }
-   
-   .kpi-grid {
-     display: grid;
-     grid-template-columns: repeat(4, 1fr);
-     gap: 16px;
-   }
-   ```
-
-   ---
-
-   ## 八、代码规范
-
-   1. 使用 `<script setup>` + Composition API
-   2. 组件名 `PascalCase`，文件名同
-   3. CSS 变量统一在 `src/assets/styles/variables.css` 声明
-   4. 装饰 blob 必须加 `aria-hidden="true"` 和 `pointer-events: none`
-   5. 文字/表格区域保持矩形，不使用有机圆角
-
-   ---
-
-   ## 九、检查清单
-
-   - [ ] 卡片使用多值不对称圆角
-   - [ ] 至少 1 个缓慢形变的背景 blob
-   - [ ] 颜色使用 CSS 变量，无硬编码
-   - [ ] 阴影使用 `--shadow-*` 变量
-   - [ ] 按钮为有机圆角
-   - [ ] 文字/表格区域保持矩形
-   - [ ] Hover 只有位移+缩放，无跳动
-   - [ ] 使用 `font-display` 用于标题
-   - [ ] 入场动效有错开延迟
-   - [ ] 装饰 blob 有无障碍属性
-
-   ---
-
-   ## 十、快速参考
-
-   | 要素       | 规范                                |
-   | ---------- | ----------------------------------- |
-   | **圆角**   | 多值不对称，避免正圆/直角           |
-   | **形变**   | 6-10s 缓慢 morph                    |
-   | **颜色**   | 蓝色，浅蓝色 白色，灰白等等组合设计 |
-   | **动效**   | 平稳，禁用 bounce                   |
-   | **文字区** | 保持矩形，确保可读                  |
-   | **氛围**   | 柔软、自然、设计感                  |
+3. |      |      |
+   | ---- | ---- |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |
+   |      |      |

@@ -1,8 +1,12 @@
-import request from '@/utils/request'
 import { getHosts } from '@/api/hosts'
 import { getScripts } from '@/api/scripts'
 import { getPlaybooks } from '@/api/playbooks'
-import { submitJob, checkCommand } from '@/api/jobExecutions'
+import {
+  submitJob,
+  checkCommand,
+  cancelJob,
+  saveAsTemplate as saveAsTemplateApi
+} from '@/api/jobExecutions'
 
 export const getHostList = () => {
   return getHosts()
@@ -46,14 +50,4 @@ export const executeJob = async (formData) => {
   }
 }
 
-export const cancelJob = (jobId) => {
-  // 后端暂未实现取消API
-  return request.post(`/job-executions/${jobId}/cancel`)
-}
-
-export { checkCommand }
-
-export const saveAsTemplate = (data) => {
-  // 作业模板功能暂未实现
-  return request.post('/job-templates', data)
-}
+export { cancelJob, checkCommand, saveAsTemplateApi as saveAsTemplate }

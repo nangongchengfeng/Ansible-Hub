@@ -147,18 +147,27 @@ const validateConfirmPassword = (rule, value, callback) => {
 }
 
 const userRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, message: '用户名至少3个字符', trigger: 'blur' }
+  ],
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱', trigger: 'blur' }
   ],
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6个字符', trigger: 'blur' }
+  ]
 }
 
 const passwordRules = {
-  newPassword: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6个字符', trigger: 'blur' }
+  ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
@@ -193,6 +202,34 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
+// 格式化后端验证错误
+const formatValidationError = (error) => {
+  if (error?.response?.data?.detail) {
+    const details = error.response.data.detail
+    if (Array.isArray(details)) {
+      return details.map(err => {
+        const field = err.loc?.slice(-1)[0] || ''
+        const fieldName = {
+          username: '用户名',
+          name: '姓名',
+          real_name: '姓名',
+          email: '邮箱',
+          role: '角色',
+          password: '密码',
+          newPassword: '新密码',
+          new_password: '新密码'
+        }[field] || field
+        return `${fieldName}: ${err.msg}`
+      }).join('\n')
+    }
+    return details
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return '操作失败，请重试'
+}
+
 const fetchData = async () => {
   if (!canManageUsers.value) {
     ElMessage.error('您没有权限管理用户')
@@ -204,7 +241,7 @@ const fetchData = async () => {
     const res = await getUsers()
     users.value = res.data
   } catch (error) {
-    ElMessage.error('获取用户列表失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     loading.value = false
   }
@@ -216,11 +253,17 @@ const resetUserForm = () => {
   userForm.email = ''
   userForm.role = ''
   userForm.password = ''
+  if (userFormRef.value) {
+    userFormRef.value.clearValidate()
+  }
 }
 
 const resetPasswordForm = () => {
   passwordForm.newPassword = ''
   passwordForm.confirmPassword = ''
+  if (passwordFormRef.value) {
+    passwordFormRef.value.clearValidate()
+  }
 }
 
 const handleCreate = () => {
@@ -260,7 +303,7 @@ const handleSaveUser = async () => {
     fetchData()
   } catch (error) {
     if (error !== false) {
-      ElMessage.error(editingUser.value ? '更新用户失败' : '创建用户失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
@@ -281,7 +324,7 @@ const handleConfirmResetPassword = async () => {
     passwordDialogVisible.value = false
   } catch (error) {
     if (error !== false) {
-      ElMessage.error('密码重置失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
@@ -298,7 +341,7 @@ const handleConfirmDelete = async () => {
     deleteDialogVisible.value = false
     fetchData()
   } catch (error) {
-    ElMessage.error('删除用户失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 

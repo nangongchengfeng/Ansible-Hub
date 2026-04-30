@@ -1,8 +1,10 @@
 from typing import Optional, List, Tuple
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.gateway import Gateway
+from app.models.business_node import BusinessNode
+from app.models.host import Host
 from app.schemas.gateway import GatewayCreate, GatewayUpdate
 
 
@@ -15,7 +17,10 @@ class GatewayService:
         result = await db.execute(
             select(Gateway)
             .where(Gateway.id == gateway_id)
-            .options(selectinload(Gateway.system_user))
+            .options(
+                selectinload(Gateway.system_user),
+                selectinload(Gateway.creator)
+            )
         )
         return result.scalar_one_or_none()
 
@@ -71,9 +76,16 @@ class GatewayService:
         db.add(gateway)
         await db.commit()
         await db.refresh(gateway)
-        # Load system_user relationship
-        await db.execute(select(Gateway).where(Gateway.id == gateway.id).options(selectinload(Gateway.system_user)))
-        return gateway
+        # Load relationships
+        result = await db.execute(
+            select(Gateway)
+            .where(Gateway.id == gateway.id)
+            .options(
+                selectinload(Gateway.system_user),
+                selectinload(Gateway.creator)
+            )
+        )
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def update(
@@ -88,13 +100,32 @@ class GatewayService:
 
         await db.commit()
         await db.refresh(gateway)
-        # Load system_user relationship
-        await db.execute(select(Gateway).where(Gateway.id == gateway.id).options(selectinload(Gateway.system_user)))
-        return gateway
+        # Load relationships
+        result = await db.execute(
+            select(Gateway)
+            .where(Gateway.id == gateway.id)
+            .options(
+                selectinload(Gateway.system_user),
+                selectinload(Gateway.creator)
+            )
+        )
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def delete(db: AsyncSession, gateway: Gateway):
         """删除网关（自动解绑业务节点和主机）"""
-        # TODO: Unbind from business_nodes and hosts (set gateway_id to null)
+        # 解绑业务节点
+        await db.execute(
+            update(BusinessNode)
+            .where(BusinessNode.gateway_id == gateway.id)
+            .values(gateway_id=None)
+        )
+        # 解绑主机
+        await db.execute(
+            update(Host)
+            .where(Host.gateway_id == gateway.id)
+            .values(gateway_id=None)
+        )
+        # 删除网关
         await db.delete(gateway)
         await db.commit()

@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from app.schemas.system_user import SystemUserSimple
+from app.schemas.user import UserSimple
 
 
 class GatewayBase(BaseModel):
@@ -51,6 +52,7 @@ class GatewayDetailResponse(GatewayBase):
     id: int
     system_user: Optional[SystemUserSimple] = None
     created_by: int
+    creator: Optional[UserSimple] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

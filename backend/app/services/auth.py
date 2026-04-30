@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.core.security import verify_password, get_password_hash
 
 
@@ -38,7 +38,7 @@ class AuthService:
         username: str,
         email: str,
         password: str,
-        role: UserRole = UserRole.OPERATOR,
+        role: str = "operator",
         real_name: Optional[str] = None,
         created_by: Optional[int] = None
     ) -> User:

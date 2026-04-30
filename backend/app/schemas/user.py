@@ -30,7 +30,15 @@ class UserCreate(UserBase):
     """创建用户"""
     password: str = Field(..., min_length=6, max_length=128)
     real_name: Optional[str] = Field(None, max_length=50, alias="name")
-    role: UserRole = UserRole.OPERATOR
+    role: str = "operator"
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def validate_role(cls, v):
+        """验证并转换角色值"""
+        if v == "superadmin":
+            return "super_admin"
+        return v
 
     class Config:
         populate_by_name = True
@@ -41,8 +49,16 @@ class UserUpdate(BaseModel):
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     real_name: Optional[str] = Field(None, max_length=50, alias="name")
-    role: Optional[UserRole] = None
+    role: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def validate_role(cls, v):
+        """验证并转换角色值"""
+        if v == "superadmin":
+            return "super_admin"
+        return v
 
     class Config:
         populate_by_name = True

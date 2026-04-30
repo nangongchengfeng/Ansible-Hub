@@ -5,7 +5,6 @@ from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.user import (
-    UserRole,
     UserCreate,
     UserUpdate,
     UserResetPassword,
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/users", tags=["用户管理"])
 
 def is_super_admin(user: User) -> bool:
     """检查用户是否是超级管理员"""
-    return user.role == UserRole.SUPER_ADMIN
+    return user.role in ("super_admin", "superadmin")
 
 
 @router.get("", response_model=UserListResponse)
@@ -27,7 +26,7 @@ async def get_users(
     skip: int = Query(0, ge=0, description="跳过数量"),
     limit: int = Query(100, ge=1, le=100, description="每页数量"),
     is_active: Optional[bool] = Query(None, description="是否启用"),
-    role: Optional[UserRole] = Query(None, description="用户角色"),
+    role: Optional[str] = Query(None, description="用户角色"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

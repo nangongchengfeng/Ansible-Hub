@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.core.security import get_password_hash
 
 
@@ -32,7 +32,7 @@ class UserService:
         skip: int = 0,
         limit: int = 100,
         is_active: Optional[bool] = None,
-        role: Optional[UserRole] = None,
+        role: Optional[str] = None,
     ) -> tuple[int, list[User]]:
         """获取用户列表"""
         # 构建查询条件
@@ -66,7 +66,7 @@ class UserService:
         email: str,
         password: str,
         is_active: bool = True,
-        role: UserRole = UserRole.OPERATOR,
+        role: str = "operator",
         real_name: Optional[str] = None,
         created_by: Optional[int] = None,
     ) -> User:
@@ -93,7 +93,7 @@ class UserService:
         username: Optional[str] = None,
         email: Optional[str] = None,
         real_name: Optional[str] = None,
-        role: Optional[UserRole] = None,
+        role: Optional[str] = None,
         is_active: Optional[bool] = None,
     ) -> User:
         """更新用户"""

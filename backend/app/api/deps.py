@@ -84,6 +84,18 @@ async def get_current_superuser(
     return current_user
 
 
+async def get_current_auditor_or_superuser(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """获取当前审计员或超级管理员"""
+    if current_user.role not in ("super_admin", "superadmin", "auditor"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="需要审计员或超级管理员权限",
+        )
+    return current_user
+
+
 def add_token_to_blacklist(token: str):
     """将token加入黑名单"""
     token_blacklist.add(token)

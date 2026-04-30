@@ -46,6 +46,9 @@ from .host import (
     HostResponse,
     HostDetailResponse,
     HostMoveRequest,
+    ResolutionPathItem,
+    ResolvedConnectionConfig,
+    HostConnectionConfigResponse,
 )
 from .script import (
     ScriptBase,
@@ -84,6 +87,14 @@ from .command_filter_rule import (
     MatchedRule,
     CommandCheckResponse,
     ReorderRulesRequest,
+)
+from .audit_log import (
+    AuditLogBase,
+    AuditLogCreate,
+    AuditLogSimple,
+    AuditLogResponse,
+    AuditLogDetailResponse,
+    AuditLogListResponse,
 )
 
 __all__ = [
@@ -128,6 +139,9 @@ __all__ = [
     "HostResponse",
     "HostDetailResponse",
     "HostMoveRequest",
+    "ResolutionPathItem",
+    "ResolvedConnectionConfig",
+    "HostConnectionConfigResponse",
     "ScriptBase",
     "ScriptCreate",
     "ScriptUpdate",
@@ -160,4 +174,10 @@ __all__ = [
     "MatchedRule",
     "CommandCheckResponse",
     "ReorderRulesRequest",
+    "AuditLogBase",
+    "AuditLogCreate",
+    "AuditLogSimple",
+    "AuditLogResponse",
+    "AuditLogDetailResponse",
+    "AuditLogListResponse",
 ]

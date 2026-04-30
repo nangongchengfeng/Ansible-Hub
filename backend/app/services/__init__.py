@@ -7,6 +7,8 @@ from .host import HostService
 from .script import ScriptService
 from .playbook import PlaybookService
 from .command_filter_rule import CommandFilterRuleService
+from .ssh import SSHService
+from .audit_log import AuditLogService, audit_log
 
-__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService", "CommandFilterRuleService"]
+__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService", "CommandFilterRuleService", "SSHService", "AuditLogService", "audit_log"]
 

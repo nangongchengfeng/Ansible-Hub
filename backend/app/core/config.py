@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 
@@ -26,11 +26,19 @@ class Settings(BaseSettings):
     FERNET_KEY: str = "naEdG_qFeaI_WZQcPRTOPK_7Z-tvXnZleClUfjvpTmw="
 
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True
+    )
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """解析CORS来源为列表"""
+        if not self.BACKEND_CORS_ORIGINS:
+            return []
+        return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",")]
 
 
 settings = Settings()

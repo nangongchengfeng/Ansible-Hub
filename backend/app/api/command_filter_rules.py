@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.api.deps import get_current_user, get_current_superuser
 from app.models.user import User
-from app.models.command_filter_rule import CommandFilterRule, MatchType, ActionType
+from app.models.command_filter_rule import CommandFilterRule
 from app.schemas.command_filter_rule import (
     CommandFilterRuleCreate,
     CommandFilterRuleUpdate,
@@ -25,7 +25,7 @@ async def get_command_filter_rules(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     is_enabled: Optional[bool] = Query(None),
-    match_type: Optional[MatchType] = Query(None),
+    match_type: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -140,9 +140,9 @@ async def check_command(
     allowed, matched_rules, severity = await CommandFilterRuleService.check_command(db, check_in.command)
 
     message = "命令允许执行"
-    if severity == ActionType.WARN:
+    if severity == "warn":
         message = "命令有警告但允许执行"
-    elif severity == ActionType.BLOCK:
+    elif severity == "block":
         message = "命令被禁止"
 
     return CommandCheckResponse(

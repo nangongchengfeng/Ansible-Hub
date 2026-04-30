@@ -3,7 +3,7 @@ import re
 from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.command_filter_rule import CommandFilterRule, MatchType, ActionType
+from app.models.command_filter_rule import CommandFilterRule
 from app.schemas.command_filter_rule import CommandFilterRuleCreate, CommandFilterRuleUpdate
 
 
@@ -26,7 +26,7 @@ class CommandFilterRuleService:
         skip: int = 0,
         limit: int = 100,
         is_enabled: Optional[bool] = None,
-        match_type: Optional[MatchType] = None,
+        match_type: Optional[str] = None,
     ) -> Tuple[int, List[CommandFilterRule]]:
         """获取规则列表"""
         # Build conditions
@@ -141,7 +141,7 @@ class CommandFilterRuleService:
     async def check_command(
         db: AsyncSession,
         command: str,
-    ) -> Tuple[bool, List[CommandFilterRule], ActionType]:
+    ) -> Tuple[bool, List[CommandFilterRule], str]:
         """检查命令是否匹配规则"""
         # Get all enabled rules, ordered by priority
         result = await db.execute(
@@ -152,13 +152,13 @@ class CommandFilterRuleService:
         rules = list(result.scalars().all())
 
         matched_rules = []
-        final_action = None
+        final_action = "warn"
 
         for rule in rules:
             matched = False
-            if rule.match_type == MatchType.CONTAINS:
+            if rule.match_type == "contains":
                 matched = rule.pattern in command
-            elif rule.match_type == MatchType.REGEX:
+            elif rule.match_type == "regex":
                 try:
                     matched = bool(re.search(rule.pattern, command))
                 except re.error:
@@ -167,10 +167,10 @@ class CommandFilterRuleService:
 
             if matched:
                 matched_rules.append(rule)
-                if rule.action == ActionType.BLOCK:
-                    final_action = ActionType.BLOCK
-                elif final_action != ActionType.BLOCK and rule.action == ActionType.WARN:
-                    final_action = ActionType.WARN
+                if rule.action == "block":
+                    final_action = "block"
+                elif final_action != "block" and rule.action == "warn":
+                    final_action = "warn"
 
-        allowed = final_action != ActionType.BLOCK
-        return allowed, matched_rules, final_action or ActionType.WARN
+        allowed = final_action != "block"
+        return allowed, matched_rules, final_action

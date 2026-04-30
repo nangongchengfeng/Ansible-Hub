@@ -1,16 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-from app.models.command_filter_rule import MatchType, ActionType
 
 
 class CommandFilterRuleBase(BaseModel):
     """命令过滤规则基础信息"""
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None)
-    match_type: MatchType = Field(MatchType.CONTAINS, description="匹配类型")
+    match_type: str = Field("contains", description="匹配类型: contains/regex")
     pattern: str = Field(..., description="匹配模式")
-    action: ActionType = Field(ActionType.BLOCK, description="动作")
+    action: str = Field("block", description="动作: block/warn")
     priority: int = Field(0, description="优先级（数字越小优先级越高）")
     is_enabled: bool = Field(True, description="是否启用")
 
@@ -24,9 +23,9 @@ class CommandFilterRuleUpdate(BaseModel):
     """更新命令过滤规则"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None)
-    match_type: Optional[MatchType] = Field(None)
+    match_type: Optional[str] = Field(None)
     pattern: Optional[str] = Field(None)
-    action: Optional[ActionType] = Field(None)
+    action: Optional[str] = Field(None)
     priority: Optional[int] = Field(None)
 
 
@@ -50,12 +49,6 @@ class CommandFilterRuleResponse(CommandFilterRuleBase):
         from_attributes = True
 
 
-class CommandFilterRuleListResponse(BaseModel):
-    """命令过滤规则列表响应"""
-    total: int
-    items: List[CommandFilterRuleResponse]
-
-
 class CommandFilterRuleDetailResponse(CommandFilterRuleBase):
     """命令过滤规则详情响应"""
     id: int
@@ -76,8 +69,8 @@ class MatchedRule(BaseModel):
     """匹配的规则"""
     id: int
     name: str
-    action: ActionType
-    match_type: MatchType
+    action: str
+    match_type: str
     pattern: str
 
     class Config:
@@ -88,7 +81,7 @@ class CommandCheckResponse(BaseModel):
     """命令检查响应"""
     allowed: bool
     matched_rules: List[MatchedRule]
-    severity: ActionType
+    severity: str
     message: str
 
 

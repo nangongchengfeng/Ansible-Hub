@@ -68,14 +68,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { getGateways, createGateway, updateGateway, deleteGateway } from '@/api/gateways'
 import { getSystemUsers } from '@/api/system-users'
 
-const route = useRoute()
 const loading = ref(false)
 const submitLoading = ref(false)
 const gateways = ref([])
@@ -199,16 +197,6 @@ const handleSubmit = async () => {
     }
   })
 }
-
-// 监听路由变化，重新加载数据
-watch(
-  () => route.path,
-  (newPath) => {
-    if (newPath === '/gateways') {
-      fetchData()
-    }
-  }
-)
 
 onMounted(() => {
   fetchData()

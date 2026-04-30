@@ -5,6 +5,7 @@ from .system_user import SystemUserService
 from .gateway import GatewayService
 from .host import HostService
 from .script import ScriptService
+from .playbook import PlaybookService
 
-__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService"]
+__all__ = ["AuthService", "UserService", "BusinessNodeService", "SystemUserService", "GatewayService", "HostService", "ScriptService", "PlaybookService"]
 

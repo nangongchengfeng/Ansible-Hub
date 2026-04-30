@@ -5,5 +5,6 @@ from .system_user import SystemUser
 from .gateway import Gateway
 from .host import Host
 from .script import Script, ScriptVersion
+from .playbook import Playbook, PlaybookVersion
 
-__all__ = ["User", "BusinessNode", "BusinessNodePermission", "SystemUser", "Gateway", "Host", "Script", "ScriptVersion"]
+__all__ = ["User", "BusinessNode", "BusinessNodePermission", "SystemUser", "Gateway", "Host", "Script", "ScriptVersion", "Playbook", "PlaybookVersion"]

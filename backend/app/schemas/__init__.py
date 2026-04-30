@@ -60,6 +60,19 @@ from .script import (
     ScriptRollback,
     ScriptRollbackResponse,
 )
+from .playbook import (
+    PlaybookBase,
+    PlaybookCreate,
+    PlaybookUpdate,
+    PlaybookSimple,
+    PlaybookResponse,
+    PlaybookDetailResponse,
+    PlaybookVersionSimple,
+    PlaybookVersionDetail,
+    PlaybookVersionListResponse,
+    PlaybookRollback,
+    PlaybookRollbackResponse,
+)
 
 __all__ = [
     "LoginRequest",
@@ -114,4 +127,15 @@ __all__ = [
     "ScriptVersionListResponse",
     "ScriptRollback",
     "ScriptRollbackResponse",
+    "PlaybookBase",
+    "PlaybookCreate",
+    "PlaybookUpdate",
+    "PlaybookSimple",
+    "PlaybookResponse",
+    "PlaybookDetailResponse",
+    "PlaybookVersionSimple",
+    "PlaybookVersionDetail",
+    "PlaybookVersionListResponse",
+    "PlaybookRollback",
+    "PlaybookRollbackResponse",
 ]

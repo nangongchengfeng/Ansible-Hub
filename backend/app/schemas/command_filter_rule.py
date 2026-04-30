@@ -60,6 +60,15 @@ class CommandFilterRuleDetailResponse(CommandFilterRuleBase):
         from_attributes = True
 
 
+class CommandFilterRuleListResponse(BaseModel):
+    """命令过滤规则列表响应"""
+    total: int
+    items: List[CommandFilterRuleResponse]
+
+    class Config:
+        from_attributes = True
+
+
 class CommandCheckRequest(BaseModel):
     """命令检查请求"""
     command: str = Field(..., description="要检查的命令")

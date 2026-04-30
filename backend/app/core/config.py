@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # 数据库配置
-    DATABASE_URL: str = "postgresql+asyncpg://user:pass@localhost:5432/ansible_db"
+    DATABASE_URL: str = "mysql+asyncmy://root:123456@127.0.0.1:3306/ansible_db"
 
     # Redis配置
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = "redis://127.0.0.1:6379/0"
 
     # JWT配置
     SECRET_KEY: str = "your-super-secret-key-change-in-production"

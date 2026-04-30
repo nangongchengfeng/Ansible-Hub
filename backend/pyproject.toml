@@ -9,15 +9,20 @@ dependencies = [
     "sqlalchemy>=2.0.35",
     "alembic>=1.13.3",
     "asyncpg>=0.30.0",
+    "asyncmy>=0.2.9",
     "redis>=7.0.0",
     "celery>=5.4.0",
     "cryptography>=43.0.0",
     "pydantic-settings>=2.6.0",
     "pydantic>=2.9.0",
+    "pydantic[email]>=2.9.0",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
     "python-multipart>=0.0.12",
 ]
+
+[tool.setuptools]
+packages = ["app"]
 
 [project.optional-dependencies]
 dev = [

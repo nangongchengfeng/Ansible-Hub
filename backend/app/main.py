@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth_router
+from app.api import auth_router, users_router
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
@@ -16,6 +16,7 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(auth_router)
+app.include_router(users_router)
 
 
 @app.get("/health")

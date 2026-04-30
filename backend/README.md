@@ -5,7 +5,6 @@
 ### 1. 安装依赖
 ```bash
 uv sync
-uv pip install -e ".[dev]"
 ```
 
 ### 2. 配置环境变量
@@ -16,21 +15,30 @@ cp .env.example .env
 
 ### 3. 运行数据库迁移
 ```bash
-# 确保PostgreSQL正在运行
+# 确保数据库正在运行
 uv run alembic upgrade head
 ```
 
-### 4. 启动开发服务器
+### 4. 初始化默认管理员（可选）
+```bash
+uv run python scripts/init.py
+```
+默认管理员账号：
+- 用户名: admin
+- 密码: admin123
+- 邮箱: admin@example.com
+
+### 5. 启动开发服务器
 ```bash
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 5. 启动Celery Worker（可选）
+### 6. 启动Celery Worker（可选）
 ```bash
 uv run celery -A app.core.celery_app worker --loglevel=info --pool=solo
 ```
 
-### 6. 启动Celery Beat（可选，用于定时任务）
+### 7. 启动Celery Beat（可选，用于定时任务）
 ```bash
 uv run celery -A app.core.celery_app beat --loglevel=info
 ```
@@ -44,3 +52,12 @@ uv run pytest tests/ -v
 启动服务后访问：
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+## 用户管理API
+所有用户管理接口仅超级管理员可访问：
+- `GET /users` - 获取用户列表，支持按 is_active/is_superuser 筛选和分页
+- `POST /users` - 创建新用户
+- `GET /users/{id}` - 获取用户详情
+- `PUT /users/{id}` - 更新用户信息
+- `POST /users/{id}/reset-password` - 重置用户密码
+- `DELETE /users/{id}` - 删除用户（不能删除自己）

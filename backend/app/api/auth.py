@@ -7,8 +7,8 @@ from app.schemas.auth import (
     LoginRequest,
     TokenResponse,
     RefreshTokenRequest,
-    UserResponse
 )
+from app.schemas.user import UserResponse
 from app.services.auth import AuthService
 from app.api.deps import get_current_user, get_token_payload, add_token_to_blacklist, security
 from app.models.user import User

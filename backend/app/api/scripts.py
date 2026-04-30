@@ -64,7 +64,27 @@ async def get_script(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="脚本不存在"
         )
-    return script
+
+    # 构建响应
+    return ScriptDetailResponse(
+        id=script.id,
+        name=script.name,
+        description=script.description,
+        language=script.language,
+        latest_version=script.latest_version,
+        current_content=script.current_content,
+        current_version=ScriptVersionDetail(
+            id=script.versions[0].id,
+            version=script.versions[0].version,
+            content=script.versions[0].content,
+            change_description=script.versions[0].change_description,
+            created_by=script.versions[0].created_by,
+            created_at=script.versions[0].created_at
+        ) if script.versions else None,
+        created_by=script.created_by,
+        created_at=script.created_at,
+        updated_at=script.updated_at
+    )
 
 
 @router.put("/{script_id}", response_model=ScriptResponse)

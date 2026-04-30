@@ -96,12 +96,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { getSystemUsers, createSystemUser, updateSystemUser, deleteSystemUser } from '@/api/system-users'
 import { useAuthStore } from '@/stores/auth'
 
+const route = useRoute()
 const loading = ref(false)
 const submitLoading = ref(false)
 const users = ref([])
@@ -243,6 +245,16 @@ const handleSubmit = async () => {
     }
   })
 }
+
+// 监听路由变化，重新加载数据
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath === '/system-users') {
+      fetchData()
+    }
+  }
+)
 
 onMounted(() => {
   fetchData()

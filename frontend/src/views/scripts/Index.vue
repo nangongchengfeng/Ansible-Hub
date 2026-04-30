@@ -147,7 +147,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Document } from '@element-plus/icons-vue'
-import { getScripts, createScript, updateScript, deleteScript, getScriptVersions, getScriptVersion, rollbackScript } from '@/api/scripts'
+import { getScripts, createScript, getScript, updateScript, deleteScript, getScriptVersions, getScriptVersion, rollbackScript } from '@/api/scripts'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -182,7 +182,21 @@ const formRules = {
   content: [{ required: true, message: '请输入脚本内容', trigger: 'blur' }]
 }
 
+const formatValidationError = (error) => {
+  if (error?.response?.data?.detail) {
+    if (Array.isArray(error.response.data.detail)) {
+      return error.response.data.detail.map(err => err.msg).join('\n')
+    }
+    return error.response.data.detail
+  }
+  if (error?.message) {
+    return error.message
+  }
+  return '操作失败，请重试'
+}
+
 const formatDate = (dateStr) => {
+  if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
@@ -192,7 +206,7 @@ const fetchData = async () => {
     const res = await getScripts()
     scripts.value = res.data
   } catch (error) {
-    ElMessage.error('获取脚本列表失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     loading.value = false
   }
@@ -213,13 +227,21 @@ const handleCreate = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   isEdit.value = true
   editingId.value = row.id
   dialogTitle.value = '编辑脚本'
-  formData.name = row.name
-  formData.description = row.description
-  formData.content = row.content
+
+  try {
+    const res = await getScript(row.id)
+    formData.name = res.data.name
+    formData.description = res.data.description
+    formData.content = res.data.content || ''
+  } catch (error) {
+    formData.name = row.name
+    formData.description = row.description
+    formData.content = row.content || ''
+  }
   formData.changeNote = ''
   dialogVisible.value = true
 }
@@ -236,7 +258,7 @@ const handleDelete = async (row) => {
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
@@ -259,7 +281,7 @@ const handleSubmit = async () => {
       dialogVisible.value = false
       await fetchData()
     } catch (error) {
-      ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+      ElMessage.error(formatValidationError(error))
     } finally {
       submitLoading.value = false
     }
@@ -272,9 +294,9 @@ const handleViewVersions = async (row) => {
   versionsLoading.value = true
   try {
     const res = await getScriptVersions(row.id)
-    versions.value = res.data.reverse() // 最新版本在前
+    versions.value = (res.data || []).reverse() // 最新版本在前
   } catch (error) {
-    ElMessage.error('获取历史版本失败')
+    ElMessage.error(formatValidationError(error))
   } finally {
     versionsLoading.value = false
   }
@@ -282,17 +304,22 @@ const handleViewVersions = async (row) => {
 
 const handleViewVersion = async (row) => {
   try {
-    const res = await getScriptVersion(currentScript.value.id, row.id)
+    const res = await getScriptVersion(currentScript.value.id, row.version)
     currentVersion.value = res.data
     versionDetailVisible.value = true
   } catch (error) {
-    ElMessage.error('获取版本详情失败')
+    ElMessage.error(formatValidationError(error))
   }
 }
 
 const handleViewDiff = async (row) => {
-  selectedVersion.value = row
-  diffDialogVisible.value = true
+  try {
+    const res = await getScriptVersion(currentScript.value.id, row.version)
+    selectedVersion.value = res.data
+    diffDialogVisible.value = true
+  } catch (error) {
+    ElMessage.error(formatValidationError(error))
+  }
 }
 
 const handleRollback = async (row) => {
@@ -302,13 +329,13 @@ const handleRollback = async (row) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await rollbackScript(currentScript.value.id, row.id)
+    await rollbackScript(currentScript.value.id, { target_version: row.version })
     ElMessage.success('回滚成功')
     versionsDialogVisible.value = false
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('回滚失败')
+      ElMessage.error(formatValidationError(error))
     }
   }
 }
